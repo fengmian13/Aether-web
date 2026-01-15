@@ -1,10 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, Menu, Tray } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import {onLoginOrRegister , onLoginSuccess} from './ipc'
+import {onLoginOrRegister , onLoginSuccess, winTitleOp} from './ipc'
 
 
 const login_width=300;
@@ -53,6 +53,25 @@ function createWindow() {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
 
+  //托盘
+  const tray = new Tray(icon); 
+  const contextMenu =[
+    {
+      label: '退出Anther',
+      click: function() {
+        app.exit();
+      }
+    }
+  ]
+
+  // 设置托盘图标和菜单
+  const menu = Menu.buildFromTemplate(contextMenu);
+  tray.setToolTip('Anther');// 设置托盘图标的提示文本
+  tray.setContextMenu(menu);
+  tray.on('click', function() {
+    mainWindow.show();
+  });
+
 
   // 监听登录注册
   onLoginOrRegister((isLogin)=>{
@@ -76,6 +95,47 @@ function createWindow() {
     // if(config.admin){
 
     // }
+    contextMenu.unshift({
+      label: "用户："+ config.nickname, click: function() {
+        // 显示用户信息
+      }
+    })
+    tray.setContextMenu(Menu.buildFromTemplate(contextMenu));
+  });
+
+  // 窗口操作
+  winTitleOp((e,{action,data})=>{
+    const webContents = e.sender;
+    // 获取当前操作的窗口
+    const win = BrowserWindow.fromWebContents(webContents);
+    switch(action){
+      case "close":{
+        if(data.closeType == 0){
+          // console.log("测试界面按钮响应")
+          win.close();
+        }else{
+          win.setSkipTaskbar(true);
+          win.hide();// 隐藏
+        }
+        break;
+      }
+      case "minimize":{
+        win.minimize();
+        break;
+      }
+      case "maximize":{
+        win.maximize();
+        break;
+      }
+      case "unmaximize":{
+        win.unmaximize();
+        break;
+      }
+      case "top": {
+        win.setAlwaysOnTop(data.top);
+        break;
+      }
+    }
   });
 }
 

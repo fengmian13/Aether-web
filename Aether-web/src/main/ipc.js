@@ -25,7 +25,16 @@ const onLoginSuccess = (callback) => {
   })
 }
 
+//窗口操作
+const winTitleOp = (callback)=>{
+  ipcMain.on("winTitleOp",(e,data)=>{
+    callback(e,data);
+    // console.log("测试界面按钮响应")
+  })
+}
+
 export{
     onLoginOrRegister,
-    onLoginSuccess
+    onLoginSuccess,
+    winTitleOp
 }

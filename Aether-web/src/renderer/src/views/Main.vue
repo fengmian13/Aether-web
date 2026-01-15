@@ -31,6 +31,7 @@
       </router-view>
     </div>
   </div>
+  <winOp></winOp>
 </template>
 
 <script setup>

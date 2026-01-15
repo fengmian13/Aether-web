@@ -100,6 +100,7 @@
       </el-form>
     </div>
   </div>
+  <WinOp :showSetTop="false" :showMin="false" :showMax="false" :closeType="0"></WinOp>
 </template>
 
 <script setup>
