@@ -1,7 +1,10 @@
 <template>
   <div class="login-pannel">
     <div class="title drag">Anther</div>
-    <div class="login-form">
+    <div v-if="showLoading" class="loading-panel">
+      <img src="../assets/img/loading.gif" />
+    </div>
+    <div class="login-form" v-else>
       <div class="error-msg">{{ errorMsg }}</div>
       <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="0px" @submit.prevent>
         <!--input输入-->
@@ -32,6 +35,13 @@
               <span class="iconfont icon-user-nick"></span>
             </template>
           </el-input>
+        </el-form-item>
+        <el-form-item prop="sex" v-if="!isLogin" label="性别">
+          <el-select v-model="formData.sex" placeholder="请选择性别" style="width: 100%">
+            <el-option :value="1" label="男" />
+            <el-option :value="2" label="女" />
+            <el-option :value="0" label="保密" />
+          </el-select>
         </el-form-item>
         <el-form-item prop="password">
           <el-input
@@ -94,6 +104,13 @@
 
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
+import md5 from 'md5'
+import { useUserInfoStore } from '@/stores/UserInfoStore'
+const userInfoStore = useUserInfoStore()
+
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
 const { proxy } = getCurrentInstance()
 const checkCodeUrl = ref('')
 
@@ -132,7 +149,26 @@ const changeCheckCode = async () => {
 changeCheckCode()
 
 const errorMsg = ref(null)
-const submit = () => {
+const checkValue = (type, value, msg) => {
+  if (proxy.Utils.isEmpty(value)) {
+    errorMsg.value = msg
+    return false
+  }
+  // 判断正则
+  if (type && !proxy.Verify[type](value)) {
+    errorMsg.value = msg
+    return false
+  }
+
+  return true
+}
+
+// 清空验证
+const cleanVerify = () => {
+  errorMsg.value = null
+}
+const showLoading = ref(false)
+const submit = async () => {
   cleanVerify() //清空验证
   if (!checkValue('checkEmail', formData.value.email, '请输入正确的邮箱')) {
     return
@@ -152,25 +188,52 @@ const submit = () => {
   if (!checkValue(null, formData.value.checkcode, '请输入正确的验证码')) {
     return
   }
-}
-
-const checkValue = (type, value, msg) => {
-  if (proxy.Utils.isEmpty(value)) {
-    errorMsg.value = msg
-    return false
+  if (isLogin.value) {
+    showLoading.value = true
   }
-  // 判断正则
-  if (type && !proxy.Verify[type](value)) {
-    errorMsg.value = msg
-    return false
+  let result = await proxy.Request({
+    url: isLogin.value ? proxy.Api.login : proxy.Api.register,
+    showLoading: isLogin.value ? false : true,
+    showError: false,
+    params: {
+      email: formData.value.email,
+      password: isLogin.value ? md5(formData.value.password) : formData.value.password,
+      nickName: formData.value.nickName,
+      sex: formData.value.sex,
+      checkCode: formData.value.checkcode,
+      checkCodeKey: localStorage.getItem('checkCodeKey')
+    },
+    errorCallback: (response) => {
+      showLoading.value = false
+      changeCheckCode()
+      errorMsg.value = response.info
+    }
+  })
+  if (!result) {
+    return
   }
+  if (isLogin.value) {
+    userInfoStore.setUserInfo(result.data)
+    localStorage.setItem('token', result.data.token)
+    router.push('/main')
 
-  return true
-}
-
-// 清空验证
-const cleanVerify = () => {
-  errorMsg.value = null
+    // 获取屏幕大小
+    const screenWidth = window.screen.width
+    const screenHeight = window.screen.height
+    // 打开聊天窗口
+    window.ipcRenderer.send('openChat', {
+      email: formData.value.email,
+      token: result.data.token,
+      nickName: result.data.nickName,
+      userId: result.data.userId,
+      amdin: result.data.admin,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight
+    })
+  } else {
+    proxy.Message.success('注册成功')
+    changeOpType()
+  }
 }
 </script>
 

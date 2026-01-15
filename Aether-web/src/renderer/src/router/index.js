@@ -13,7 +13,30 @@ const router = createRouter({
       path: "/login",
       name: "登录",
       component: () => import('@/views/Login.vue'),
-    }
+    },
+    {
+      path: "/main",
+      redirect: "/chat",// 默认跳转页
+      name: "主页面",
+      component: () => import('@/views/Main.vue'),
+      children: [
+        {
+          path: "/chat",
+          name: "聊天",
+          component: () => import('@/views/chat/Chat.vue'),
+        },
+        {
+          path:"/contact",
+          name: "联系人",
+          component: ()=> import('@/views/contact/Contact.vue'),
+        },
+         {
+          path:"/setting",
+          name: "设置",
+          component: ()=> import('@/views/setting/Setting.vue'),
+        },
+      ]
+    },
   ]
 })
 export default router

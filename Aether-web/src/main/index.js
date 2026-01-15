@@ -4,6 +4,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
+import {onLoginOrRegister , onLoginSuccess} from './ipc'
+
+
 const login_width=300;
 const login_height=370;
 const register_height=490;
@@ -27,16 +30,6 @@ function createWindow() {
     }
   })
 
-  ipcMain.on("loginOrRegister", (e, isLogin)=>{ 
-    console.log("收到渲染进程消息",isLogin);
-    mainWindow.setResizable(true);
-    if(isLogin){
-      mainWindow.setSize(login_width, login_height);
-    }else{
-      mainWindow.setSize(login_width, register_height);
-    }
-    mainWindow.setResizable(false);
-  })
 
   if (NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
@@ -59,6 +52,31 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+
+  // 监听登录注册
+  onLoginOrRegister((isLogin)=>{
+    mainWindow.setResizable(true);
+    if(isLogin){
+      mainWindow.setSize(login_width, login_height);
+    }else{
+      mainWindow.setSize(login_width, register_height);
+    }
+    mainWindow.setResizable(false);
+
+  });
+  // 监听登录成功
+  onLoginSuccess((config)=>{
+    mainWindow.setResizable(true);// 允许调整大小
+    mainWindow.setSize(850, 800);
+    mainWindow.center();// 居中显示
+    mainWindow.setMaximizable(true);// 允许最大化
+    mainWindow.setMinimumSize(800,600);// 设置最小尺寸
+    // TODO 管理后台的窗口操作，托盘操作
+    // if(config.admin){
+
+    // }
+  });
 }
 
 // This method will be called when Electron has finished
