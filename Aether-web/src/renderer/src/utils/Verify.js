@@ -1,0 +1,46 @@
+const regs = {
+    email:/^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/,
+    number:/^\+?[1-9][0-9]*$/,
+    password:/^(?=.*\d)(?=.*[a-zA-Z])[\da-zA-Z~!@#$%^&*_]{8,}$/,
+    rersion:/^[0-9\.]+$/
+}
+
+const verify = (rule, value, reg, callback)=>{ 
+ if(value){
+    if(regs.test(value)){
+        callback()
+    }else{
+        callback(new Error(rule.message))
+    }
+ }else{
+    callback()
+ }
+}
+
+const checkPassword = (value)=>{ 
+    return regs.password.test(value)
+}
+
+const checkEmail = (value)=>{ 
+    return regs.email.test(value)
+}
+
+const password = (rule, value, callback)=>{ 
+    return verify(rule, value, regs.password, callback)
+}
+
+const number = (rule, value, callback)=>{ 
+    return verify(rule, value, regs.number, callback)
+}
+
+const version = (rule, value, callback)=>{ 
+    return verify(rule, value, regs.rersion, callback)
+}
+
+export default {
+    password, 
+    number, 
+    version, 
+    checkPassword, 
+    checkEmail
+}
