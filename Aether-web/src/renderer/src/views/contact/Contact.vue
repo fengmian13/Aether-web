@@ -1,29 +1,39 @@
 <template>
-  <Layout>
-    <template #left-content>
+  <div class="contact-layout">
+    <!-- 左侧区域：列表与搜索 -->
+    <div class="left-panel">
       <div class="drag-panel drag"></div>
       <div class="top-search">
-        <!--input输入-->
-
+        <!-- 搜索框 (如果未安装 Element Plus，这里可能需要调整) -->
         <el-input clearable placeholder="搜索" v-model="searchKey" size="small" @keyup="search">
-          <template>
+          <template #prefix>
             <span class="iconfont icon-search"></span>
           </template>
         </el-input>
       </div>
+
       <div class="contact-list">
-        <template v-for="item in partList">
+        <template v-for="item in partList" :key="item.partName">
           <div class="part-title">{{ item.partName }}</div>
           <div class="part-list">
             <div
               v-for="sub in item.children"
+              :key="sub.path || sub.name"
               :class="['part-item', sub.path == route.path ? 'active' : '']"
               @click="partJump(sub)"
             >
               <div :class="['iconfont', sub.icon]" :style="{ background: sub.iconBgColor }"></div>
               <div class="text">{{ sub.name }}</div>
             </div>
-            <template v-for="contact in item.contactData"></template>
+
+            <!-- 你的好友/群聊数据渲染逻辑 (保留原样) -->
+            <template
+              v-for="contact in item.contactData"
+              :key="contact.id || contact.name || contact.path"
+            >
+              <!-- 实际 contact 数据渲染 -->
+            </template>
+
             <template v-if="item.contactData && item.contactData.length == 0">
               <div class="no-data">
                 {{ item.emptyMsg }}
@@ -32,20 +42,49 @@
           </div>
         </template>
       </div>
-    </template>
-    <template #rigth-content>
+    </div>
+
+    <!-- 右侧区域：详情与路由出口 -->
+    <div class="right-panel">
       <div class="title-panel drag">{{ rightTitle }}</div>
-    </template>
-  </Layout>
+
+      <!-- 核心修复：router-view 放置在这里 -->
+      <div class="content-view">
+        <router-view v-slot="{ Component }">
+          <component :is="Component" ref="componentRef"> </component>
+        </router-view>
+      </div>
+    </div>
+  </div>
 </template>
+
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
-const { proxy } = getCurrentInstance()
-
 import { useRouter, useRoute } from 'vue-router'
-const router = useRouter
-const route = useRoute
 
+const { proxy } = getCurrentInstance()
+const router = useRouter()
+const route = useRoute()
+
+const searchKey = ref('')
+
+const search = () => {
+  // 搜索逻辑
+  console.log('searching...', searchKey.value)
+}
+
+const rightTitle = ref()
+const partJump = (data) => {
+  if (data.showTitle) {
+    rightTitle.value = data.name
+  } else {
+    rightTitle.value = null
+  }
+  //TODO 处理联系人好友申请 数量已读
+  router.push(data.path)
+}
+
+// 菜单数据
 const partList = ref([
   {
     partName: '新朋友',
@@ -101,11 +140,41 @@ const partList = ref([
     emptyMsg: '暂无好友'
   }
 ])
-
-const rightTitle = ref()
 </script>
 
 <style lang="scss" scoped>
+/* 整体布局容器：左右结构 */
+.contact-layout {
+  display: flex;
+  width: 100%;
+  height: 100%; /* 继承父容器高度 */
+  overflow: hidden;
+}
+
+/* 左侧面板样式 */
+.left-panel {
+  width: 250px; /* 固定宽度 */
+  background: #f7f7f7;
+  border-right: 1px solid #d6d6d6;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 右侧面板样式 */
+.right-panel {
+  flex: 1; /* 占据剩余空间 */
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  position: relative; /* 为子元素定位提供参照 */
+}
+
+/* 内容区域，router-view 的容器 */
+.content-view {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
 .drag-panel {
   height: 25px;
   background: #f7f7f7;
@@ -115,16 +184,22 @@ const rightTitle = ref()
   background: #f7f7f7;
   display: flex;
   align-items: center;
+  /* 修复 input 样式问题 */
+  :deep(.el-input__wrapper) {
+    border-radius: 4px;
+  }
   .iconfont {
     font-size: 12px;
   }
 }
+
 .contact-list {
-  border-top: 1px solid#ddd;
-  height: calc(100vh - 62px);
-  overflow: hidden;
+  border-top: 1px solid #ddd;
+  flex: 1; /* 让列表占据左侧剩余高度 */
+  overflow-y: auto; /* 允许滚动 */
+
   &:hover {
-    overflow: auto;
+    overflow-y: auto;
   }
   .part-title {
     color: #515151;
@@ -132,7 +207,7 @@ const rightTitle = ref()
     margin-top: 10px;
   }
   .part-list {
-    border-bottom: 1px solid#d6d6d6;
+    border-bottom: 1px solid #d6d6d6;
     .part-item {
       display: flex;
       align-items: center;
@@ -150,6 +225,7 @@ const rightTitle = ref()
         justify-content: center;
         font-size: 20px;
         color: #fff;
+        border-radius: 4px;
       }
       .text {
         flex: 1;
@@ -180,8 +256,10 @@ const rightTitle = ref()
   height: 60px;
   display: flex;
   align-items: center;
-  padding-left: 10px;
+  padding-left: 20px; /* 稍微增加一点左边距 */
   font-size: 18px;
   color: #000000;
+  border-bottom: 1px solid #e7e7e7; /* 增加底部边框，区分标题和内容 */
+  flex-shrink: 0; /* 防止被压缩 */
 }
 </style>

@@ -5,6 +5,14 @@ const isEmpty = (value) => {
     return false;
 };
 
+
+const getAreaInfo = (data) => {
+    if (isEmpty(data)) {
+        return "-";
+    }
+    return data.replace(","," ");
+}
+
 export default {
     isEmpty
 }

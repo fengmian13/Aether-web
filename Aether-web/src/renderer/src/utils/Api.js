@@ -6,6 +6,7 @@ const api = {
     checkCode: "/account/checkCode",//验证码
     login:"/account/login",//登录
     register: "/account/register",//注册
+    search: "/userContact/search",//搜索
 }
 
 export default api;
