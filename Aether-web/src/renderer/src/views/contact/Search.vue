@@ -132,14 +132,14 @@ const applyContact = () => {}
       border-radius: 5px 0px 0px 0px; // 将'Opx'更改为'0px'
       font-size: 12px;
     }
+  }
 
-    .op-btn {
-      border-radius: 5px;
-      margin-top: 10px;
-      padding: 10px;
-      background: #fff;
-      text-align: center;
-    }
+  .op-btn {
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #fff;
+    text-align: center;
   }
 }
 </style>
