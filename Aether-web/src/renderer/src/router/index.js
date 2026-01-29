@@ -39,7 +39,15 @@ const router = createRouter({
               path:"/contact/search",
               name: "搜索",
                component: () => import('@/views/contact/Search.vue'),
-            },
+            },{
+              path:"/contact/contactNotice",
+              name: "申请",
+               component: () => import('@/views/contact/ContactNotice.vue'),
+            },{
+              path:"/contact/userDetail",
+              name: "联系人详情",
+              component: () => import('@/views/contact/UserDetail.vue'),
+            }
           ]
         },
          {

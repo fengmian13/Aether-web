@@ -81,7 +81,17 @@ const search = async () => {
   searchResult.value = result.data
 }
 
-const applyContact = () => {}
+const applyContact = async () => {
+  let result = await proxy.Request({
+    url: proxy.Api.apply,
+    params: {
+      receiveUserId: contactId.value
+    }
+  })
+  if (!result) {
+    return
+  }
+}
 </script>
 
 <style lang="scss" scoped>

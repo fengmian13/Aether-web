@@ -7,6 +7,11 @@ const api = {
     login:"/account/login",//登录
     register: "/account/register",//注册
     search: "/userContact/search",//搜索
+    apply: "/userContact/contactApply",//申请
+    contactNotice: "/userContact/loadContactApply",//申请列表
+    dealWithApply: "/userContact/dealWithApply",//处理申请
+    loadContactUser: "/userContact/loadContactUser",//加载联系人
+
 }
 
 export default api;
