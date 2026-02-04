@@ -14,66 +14,38 @@
       <!-- 列表区域 -->
       <div class="contact-list">
         <template v-for="item in partList" :key="item.partName">
-          <div class="part-title">{{ item.partName }}</div>
+          <div v-if="item.partName !== '我加入的群聊' || item.contactData.length > 0">
+            <div class="part-title">{{ item.partName }}</div>
 
-          <div class="part-group">
-            <!-- 1. 渲染固定菜单 (如：新朋友、群聊) -->
-            <div
-              v-for="sub in item.children"
-              :key="sub.path || sub.name"
-              :class="['part-item', sub.path === route.path ? 'active' : '']"
-              @click="handleMenuClick(sub)"
-            >
-              <div class="icon-box" :style="{ background: sub.iconBgColor }">
-                <span :class="['iconfont', sub.icon]"></span>
-              </div>
-              <div class="text">{{ sub.name }}</div>
-            </div>
-
-            <!-- 2. 渲染动态数据 (如：好友列表、群组列表) -->
-            <div
-              v-for="contact in item.contactData"
-              :key="contact[item.contactId] || contact.id"
-              :class="['part-item', isActiveContact(contact, item) ? 'active' : '']"
-              @click="handleContactClick(contact, item)"
-            >
-              <!-- 头像 -->
-              <div class="avatar-box">
-                {{ (contact[item.contactName] || contact.name || 'U').substring(0, 1) }}
-              </div>
-
-              <!-- 文本区域：根据是否是好友列表进行不同渲染 -->
-              <div class="text-container">
-                <div class="main-text">
-                  {{ contact[item.contactName] || contact.name }}
-
-                  <!-- 特殊展示：如果是好友列表，显示性别图标 -->
-                  <span
-                    v-if="item.partName === '我的好友'"
-                    class="sex-icon"
-                    :class="contact.sex == 1 ? 'man' : 'woman'"
-                  >
-                    <!-- 这里用简单的字符或颜色区分，实际可用 iconfont -->
-                    <i :class="['iconfont', contact.sex == 1 ? 'icon-man' : 'icon-woman']"></i>
-                  </span>
+            <div class="part-list">
+              <div
+                v-for="sub in item.children"
+                :key="sub.path"
+                :class="['part-item', sub.path == route.path ? 'active' : '']"
+                @click="handleMenuClick(sub)"
+              >
+                <div class="icon-box" :style="{ background: sub.iconBgColor }">
+                  <span :class="['iconfont', sub.icon]"></span>
                 </div>
-
-                <!-- 特殊展示：如果是好友列表，显示状态 -->
-                <div v-if="item.partName === '我的好友'" class="sub-text">
-                  {{ getStatusText(contact.status) }}
-                </div>
+                <div class="text">{{ sub.name }}</div>
               </div>
-            </div>
-
-            <!-- 3. 空状态 -->
-            <div
-              v-if="
-                (!item.children || item.children.length === 0) &&
-                (!item.contactData || item.contactData.length === 0)
-              "
-              class="no-data"
-            >
-              {{ item.emptyMsg }}
+              <template v-for="contact in item.contactData" :key="contact[item.contactId]">
+                <div
+                  :class="[
+                    'part-item',
+                    contact[item.contactId] == route.query.contactId ? 'active' : ''
+                  ]"
+                  @click="contactDetail(contact, item)"
+                >
+                  <Avatar :userId="contact[item.contactId]" :width="35"></Avatar>
+                  <div class="text">{{ contact[item.contactName] }}</div>
+                </div>
+              </template>
+              <template v-if="item.contactData && item.contactData.length === 0">
+                <div class="no-data">
+                  {{ item.emptyMsg }}
+                </div>
+              </template>
             </div>
           </div>
         </template>
@@ -94,12 +66,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, onMounted } from 'vue'
+import { ref, reactive, getCurrentInstance, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import Avatar from '../../components/Avatar.vue'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+
+import { userContactStateStore } from '@/stores/ContactStateStore'
+const contactStateStore = userContactStateStore()
 
 const searchKey = ref('')
 const rightTitle = ref('')
@@ -188,7 +164,7 @@ const handleMenuClick = (sub) => {
   router.push(sub.path)
 }
 
-const handleContactClick = (contact, item) => {
+const contactDetail = (contact, item) => {
   const name = contact[item.contactName] || contact.name
   rightTitle.value = name
 
@@ -196,7 +172,7 @@ const handleContactClick = (contact, item) => {
 
   router.push({
     path: item.contactPath,
-    query: { id: id }
+    query: { contactId: id }
   })
 }
 
@@ -206,22 +182,45 @@ const isActiveContact = (contact, item) => {
   return route.path === item.contactPath && currentId === itemId
 }
 
-// 获取好友列表
-const loadContact = async () => {
+onMounted(() => {
+  loadContact()
+})
+// 重构好友、群组列表
+const loadContact = async (contactType) => {
   let result = await proxy.Request({
-    url: proxy.Api.loadContactUser
+    url: proxy.Api.loadContact,
+    params: {
+      contactType
+    }
   })
   if (!result) {
     return
   }
-  // 将接口数据赋值给“我的好友”部分的 contactData
-  // partList[3] 对应的是 '我的好友'
-  partList[3].contactData = result.data
+  if (contactType === 'GROUP') {
+    partList[2].contactData = result.data
+  } else if (contactType === 'USER') {
+    partList[3].contactData = result.data
+  }
 }
+loadContact('GROUP')
+loadContact('USER')
 
-onMounted(() => {
-  loadContact()
-})
+watch(
+  () => contactStateStore.contactRelaod,
+  (newVal, oldVal) => {
+    if (!newVal) {
+      return
+    }
+    switch (newVal) {
+      case 'USER':
+      case 'GROUP':
+        loadContact(newVal)
+        break
+      default:
+        break
+    }
+  }
+)
 </script>
 
 <style lang="scss" scoped>
@@ -387,7 +386,6 @@ onMounted(() => {
 
 .content-view {
   flex: 1;
-  padding: 20px;
   overflow-y: auto;
 }
 

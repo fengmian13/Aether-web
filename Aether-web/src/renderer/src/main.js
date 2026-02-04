@@ -13,22 +13,27 @@ import Request from '@/utils/Request.js'
 import Message from '@/utils/Message.js'
 import Api from '@/utils/Api.js'
 
+import Dialog from "@/components/Dialog.vue"
 import WinOp from "@/components/WinOp.vue"
 import Layout from "@/components/Layout.vue"
 import  ContentPanel from "@/components/ContentPanel.vue"
 import ShowLocalImage from "@/components/ShowLocalImage.vue"
 import UserBaseInfo from "@/components/UserBaseInfo.vue"
+import Avatar from "@/components/Avatar.vue"
 
 import router from '@/router'
 const app = createApp(App)
 app.use(ElementPlus)
 app.use(router);
 app.use(Pinia.createPinia())
+
 app.component("Layout", Layout)
+app.component("Dialog", Dialog)
 app.component("WinOp", WinOp)
 app.component("ContentPanel", ContentPanel)
 app.component("ShowLocalImage", ShowLocalImage)
 app.component("UserBaseInfo", UserBaseInfo)
+app.component("Avatar", Avatar)
 
 app.config.globalProperties.Utils = Utils;
 app.config.globalProperties.Verify = Verify;

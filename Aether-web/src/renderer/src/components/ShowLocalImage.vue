@@ -1,6 +1,10 @@
 <template>
   <div class="image-panel" @click="showImageHandler">
-    <el-image :src="serverUrl" fit="scale_down" :width="width"></el-image>
+    <el-image :src="serverUrl" fit="scale-down" style="width: 100%; height: 100%">
+      <template #error>
+        <img :src="noData" width="100%" height="100%" />
+      </template>
+    </el-image>
   </div>
 </template>
 <script setup>
@@ -36,12 +40,17 @@ const showImageHandler = () => {
   // 实现图片显示逻辑
 }
 
+import noData from '@/assets/img/no_data.png'
+
 const serverUrl = computed(() => {
   if (!props.fileId) {
-    return ''
+    return noData
   }
-  return ''
-  // TODO 获取本地服务的图片URL
+  let url = `${proxy.Api.prodDomain}/file/getResource?sourceName=${props.partType}&fileId=${props.fileId}`
+  if (props.forceGet) {
+    url += `&_t=${new Date().getTime()}`
+  }
+  return url
 })
 </script>
 
@@ -52,6 +61,8 @@ const serverUrl = computed(() => {
   display: flex;
   overflow: hidden;
   cursor: pointer;
+  width: 100%;
+  height: 100%;
   max-width: 170px;
   max-height: 170px;
   background: #ddd;

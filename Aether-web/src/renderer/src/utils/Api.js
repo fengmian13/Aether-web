@@ -10,7 +10,7 @@ const api = {
     apply: "/userContact/contactApply",//申请
     contactNotice: "/userContact/loadContactApply",//申请列表
     dealWithApply: "/userContact/dealWithApply",//处理申请
-    loadContactUser: "/userContact/loadContactUser",//加载联系人
+    loadContact: "/userContact/loadContact",//加载联系人
 
 }
 

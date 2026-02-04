@@ -1,38 +1,6 @@
 <template>
   <div class="wechat-container">
     <!-- 顶部导航栏 -->
-    <div class="nav-bar">
-      <svg
-        class="icon"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="m15 18-6-6 6-6" />
-      </svg>
-      <svg
-        class="icon"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="1" />
-        <circle cx="19" cy="12" r="1" />
-        <circle cx="5" cy="12" r="1" />
-      </svg>
-    </div>
 
     <!-- 主要内容区域 (可滚动，如果内容超出) -->
     <div class="content-scroll-area">
@@ -64,6 +32,24 @@
           </div>
           <p class="sub-text">账号ID： {{ user.wechatId }}</p>
           <p class="sub-text">地区： {{ user.region }}</p>
+        </div>
+        <div class="more-icon">
+          <svg
+            class="icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="19" cy="12" r="1" />
+            <circle cx="5" cy="12" r="1" />
+          </svg>
         </div>
       </div>
 

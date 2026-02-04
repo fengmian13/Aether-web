@@ -47,6 +47,10 @@ const router = createRouter({
               path:"/contact/userDetail",
               name: "联系人详情",
               component: () => import('@/views/contact/UserDetail.vue'),
+            },{
+              path:"/contact/createGroup",
+              name: "创建群组",
+              component: () => import('@/views/contact/GroupEdit.vue'),
             }
           ]
         },

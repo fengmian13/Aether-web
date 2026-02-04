@@ -1,47 +1,51 @@
 <template>
-  <ContentPanel>
-    <div class="search-form">
-      <el-input
-        clearable
-        placeholder="请输入用户ID或群组ID"
-        v-model="contactId"
-        size="large"
-        @keyup.enter="search"
-      ></el-input>
-      <div class="search-btn iconfont icon-search" @click="search"></div>
-    </div>
-    <div v-if="searchResult && Object.keys(searchResult).length > 0" class="search-result-panel">
-      <div class="search-result">
-        <span class="contact-type">{{ contactTypeName }}</span>
-        <UserBaseInfo
-          :userInfo="searchResult"
-          :showArea="searchResult.contactType == 'USER'"
-        ></UserBaseInfo>
+  <div>
+    <ContentPanel>
+      <div class="search-form">
+        <el-input
+          clearable
+          placeholder="请输入用户ID或群组ID"
+          v-model="contactId"
+          size="large"
+          @keyup.enter="search"
+        ></el-input>
+        <div class="search-btn iconfont icon-search" @click="search"></div>
       </div>
-      <div class="op-btn" v-if="searchResult.contactId != userInfoStore.getUserInfo().userId">
-        <el-button
-          type="primary"
-          v-if="
-            searchResult.status == null ||
-            searchResult.status == 0 ||
-            searchResult.status == 2 ||
-            searchResult.status == 3 ||
-            searchResult.status == 4
-          "
-          @click="applyContact"
-          >{{ searchResult.contactType == 'USER' ? '申请加好友' : '申请加群' }}</el-button
-        >
-        <el-button type="primary" v-else-if="searchResult.status == 1" @click="sendMessage"
-          >发送消息</el-button
-        >
-        <span v-if="searchResult.status == 5 || searchResult.status == 6">你已被拉黑</span>
+      <div v-if="searchResult && Object.keys(searchResult).length > 0" class="search-result-panel">
+        <div class="search-result">
+          <span class="contact-type">{{ contactTypeName }}</span>
+          <UserBaseInfo
+            :userInfo="searchResult"
+            :showArea="searchResult.contactType == 'USER'"
+          ></UserBaseInfo>
+        </div>
+        <div class="op-btn" v-if="searchResult.contactId != userInfoStore.getUserInfo().userId">
+          <el-button
+            type="primary"
+            v-if="
+              searchResult.status == null ||
+              searchResult.status == 0 ||
+              searchResult.status == 2 ||
+              searchResult.status == 3 ||
+              searchResult.status == 4
+            "
+            @click="applyContact"
+            >{{ searchResult.contactType == 'USER' ? '申请加好友' : '申请加群' }}</el-button
+          >
+          <el-button type="primary" v-else-if="searchResult.status == 1" @click="sendMessage"
+            >发送消息</el-button
+          >
+          <span v-if="searchResult.status == 5 || searchResult.status == 6">你已被拉黑</span>
+        </div>
       </div>
-    </div>
-    <div v-else class="no-data">没有搜索到结果</div>
-  </ContentPanel>
+      <div v-else class="no-data">没有搜索到结果</div>
+    </ContentPanel>
+    <SearchAdd ref="searchAddRef" @reload="resetFrom"></SearchAdd>
+  </div>
 </template>
 
 <script setup>
+import SearchAdd from './SearchAdd.vue'
 import { ref, reactive, getCurrentInstance, nextTick, computed } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useUserInfoStore } from '@/stores/UserInfoStore'
@@ -81,16 +85,18 @@ const search = async () => {
   searchResult.value = result.data
 }
 
+const searchAddRef = ref()
 const applyContact = async () => {
-  let result = await proxy.Request({
-    url: proxy.Api.apply,
-    params: {
-      receiveUserId: contactId.value
-    }
-  })
-  if (!result) {
-    return
-  }
+  searchAddRef.value.show(searchResult.value)
+}
+
+const resetFrom = () => {
+  searchResult.value = {}
+  contactId.value = undefined
+}
+
+const sendMessage = () => {
+  // TODO 发送消息
 }
 </script>
 
