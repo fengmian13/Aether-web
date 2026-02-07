@@ -3,7 +3,7 @@ export const useUserInfoStore = defineStore('userInfo',{
 
   state: () => {
     return {
-      userInfo: {},
+      userInfo: JSON.parse(localStorage.getItem("userInfo")) || {},
     }},
     actions: { 
         setUserInfo(userInfo) {

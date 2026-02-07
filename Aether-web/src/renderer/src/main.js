@@ -12,6 +12,7 @@ import Verify from './utils/Verify.js'
 import Request from '@/utils/Request.js'
 import Message from '@/utils/Message.js'
 import Api from '@/utils/Api.js'
+import Confirm from '@/utils/Confirm.js'
 
 import Dialog from "@/components/Dialog.vue"
 import WinOp from "@/components/WinOp.vue"
@@ -20,6 +21,7 @@ import  ContentPanel from "@/components/ContentPanel.vue"
 import ShowLocalImage from "@/components/ShowLocalImage.vue"
 import UserBaseInfo from "@/components/UserBaseInfo.vue"
 import Avatar from "@/components/Avatar.vue"
+import AvatarUpload from "@/components/AvatarUpload.vue"
 
 import router from '@/router'
 const app = createApp(App)
@@ -34,12 +36,14 @@ app.component("ContentPanel", ContentPanel)
 app.component("ShowLocalImage", ShowLocalImage)
 app.component("UserBaseInfo", UserBaseInfo)
 app.component("Avatar", Avatar)
+app.component("AvatarUpload", AvatarUpload)
 
 app.config.globalProperties.Utils = Utils;
 app.config.globalProperties.Verify = Verify;
 app.config.globalProperties.Request = Request;
 app.config.globalProperties.Message = Message;
 app.config.globalProperties.Api = Api;
+app.config.globalProperties.Confirm = Confirm;
 app.mount('#app')
 
 

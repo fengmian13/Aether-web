@@ -3,15 +3,12 @@ export const userContactStateStore = defineStore('contactStateInfo',{
 
   state: () => {
     return {
-      contactRelaod: null,
-      delContactId: null,
+      contactReload: null
     }},
     actions: { 
-        setContactRelaod(state) {
-          this.contactRelaod = state;
-        },
-        delContactId(delContactId) {
-          this.delContactId = delContactId;
+        setContactReload(state) {
+          this.contactReload = null;
+          this.contactReload = state;
         }
     }
 });

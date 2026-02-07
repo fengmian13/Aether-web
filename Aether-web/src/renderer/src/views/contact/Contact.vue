@@ -165,9 +165,11 @@ const handleMenuClick = (sub) => {
 }
 
 const contactDetail = (contact, item) => {
-  const name = contact[item.contactName] || contact.name
-  rightTitle.value = name
-
+  if (item.showTitle) {
+    rightTitle.value = contact[item.contactName]
+  } else {
+    rightTitle.value = null
+  }
   const id = contact[item.contactId]
 
   router.push({
@@ -205,16 +207,36 @@ const loadContact = async (contactType) => {
 loadContact('GROUP')
 loadContact('USER')
 
+const loadMyGroup = async () => {
+  let result = await proxy.Request({
+    url: proxy.Api.loadMyGroup,
+    showLoading: false
+  })
+  if (!result) {
+    return
+  }
+  partList[1].contactData = result.data
+}
+loadMyGroup()
+
 watch(
-  () => contactStateStore.contactRelaod,
+  () => contactStateStore.contactReload,
   (newVal, oldVal) => {
     if (!newVal) {
       return
     }
     switch (newVal) {
+      case 'MY':
+        loadMyGroup()
+        break
       case 'USER':
       case 'GROUP':
         loadContact(newVal)
+        break
+      case 'REMOVE_USER':
+        loadContact('USER')
+        router.push('/contact/blank')
+        rightTitle.value = null
         break
       default:
         break

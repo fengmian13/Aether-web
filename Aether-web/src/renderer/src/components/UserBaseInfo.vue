@@ -21,7 +21,7 @@
         <span v-if="userInfo?.sex === 0" class="iconfont icon-woman"></span>
         <span v-if="userInfo?.sex === 1" class="icon-man"></span>
       </div>
-      <div class="info">ID: {{ userInfo?.contactId || '' }}</div>
+      <div class="info">ID: {{ userInfo?.userId || userInfo?.contactId || '' }}</div>
       <div class="info" v-if="showArea && userInfo?.areaName">
         地区:{{ proxy.Utils.getAreaInfo(userInfo?.areaName || '') }}
       </div>
