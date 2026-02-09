@@ -18,7 +18,8 @@ const api = {
     addContact2BlackList: "/userContact/addContact2BlackList",//加入黑名单TODO
     delContact: "/userContact/delContact",//删除联系人TODO
     getUserInfoByUserId: "/userInfo/getUserInfoByUserId",//获取用户信息
-
+    dissolutionGroup: "/group/dissolutionGroup",//解散群组
+    leaveGroup: "/group/leaveGroup",//退出群组
 }
 
 export default api;

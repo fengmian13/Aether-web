@@ -185,6 +185,10 @@ const fetchContactApplyList = async () => {
     } else {
       list.value = []
     }
+    // 按时间降序排序
+    list.value.sort((a, b) => {
+      return b.applyTime - a.applyTime
+    })
   } catch (err) {
     console.error('获取联系人申请失败:', err)
     error.value = '加载失败，请稍后重试'

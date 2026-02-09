@@ -233,6 +233,16 @@ watch(
       case 'GROUP':
         loadContact(newVal)
         break
+      case 'DISSOLUTION_GROUP':
+        loadMyGroup()
+        router.push('/contact/blank')
+        rightTitle.value = null
+        break
+      case 'LEAVE_GROUP':
+        loadContact('USER')
+        router.push('/contact/blank')
+        rightTitle.value = null
+        break
       case 'REMOVE_USER':
         loadContact('USER')
         router.push('/contact/blank')

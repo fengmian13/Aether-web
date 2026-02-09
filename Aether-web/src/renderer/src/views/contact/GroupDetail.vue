@@ -98,7 +98,13 @@ watch(
 )
 
 const sendMessage = () => {
-  // TODO: Implement send message
+  router.push({
+    path: '/chat',
+    query: {
+      chatId: groupInfo.value.groupId,
+      timeStamp: new Date().getTime()
+    }
+  })
 }
 
 const groupEditDialogRef = ref()
@@ -107,11 +113,45 @@ const editGroupInfo = () => {
 }
 
 const dissolutionGroup = () => {
-  // TODO
+  proxy.Confirm({
+    message: '确定删除群组？删除之后将无法恢复！',
+    okfun: async () => {
+      contactStateStore.setContactReload(null)
+      let result = await proxy.Request({
+        url: proxy.Api.dissolutionGroup,
+        params: {
+          groupId: groupInfo.value.groupId
+        }
+      })
+      if (!result) {
+        return
+      }
+      proxy.Message.success('解散成功')
+      //刷新群组列表
+      contactStateStore.setContactReload('DISSOLUTION_GROUP')
+    }
+  })
 }
 
-const quitGroup = () => {
-  // TODO
+const leaveGroup = () => {
+  proxy.Confirm({
+    message: '确定退出群组？',
+    okfun: async () => {
+      contactStateStore.setContactReload(null)
+      let result = await proxy.Request({
+        url: proxy.Api.leaveGroup,
+        params: {
+          groupId: groupInfo.value.groupId
+        }
+      })
+      if (!result) {
+        return
+      }
+      proxy.Message.success('退出成功')
+      //刷新群组列表
+      contactStateStore.setContactReload('leaveGroup')
+    }
+  })
 }
 </script>
 

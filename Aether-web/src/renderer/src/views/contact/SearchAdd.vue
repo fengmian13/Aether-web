@@ -58,14 +58,11 @@ const emit = defineEmits(['reload'])
 const submitApply = async () => {
   const { contactId, contactType, applyInfo } = formData.value
   let result = await proxy.Request({
-    url: proxy.Api.apply, //TODO: 待完善,后端需要改
-    // params: {
-    //   contactId,
-    //   applyInfo,
-    //   contactType
-    // }
+    url: proxy.Api.apply,
     params: {
-      receiveUserId: contactId.value
+      receiveUserId: contactId,
+      applyInfo: applyInfo,
+      contactType: contactType
     }
   })
   if (!result) {
