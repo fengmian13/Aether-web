@@ -4,7 +4,7 @@
       <slot name="left-content"> </slot>
     </div>
     <div class="right-content">
-      <slot name="rigth-content"> </slot>
+      <slot name="right-content"> </slot>
     </div>
   </div>
 </template>

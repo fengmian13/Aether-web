@@ -44,18 +44,24 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
-const preview = ref(false)
-const localFile = ref(null)
+// const emit = defineEmits(['update:modelValue'])
+// const preview = ref(false)
+// const localFile = ref(null)
 
-const uploadImage = async (fileItem) => {
-  const file = fileItem.file
-  // Create local preview
-  localFile.value = URL.createObjectURL(file)
-  preview.value = true
+// const uploadImage = async (fileItem) => {
+//   const file = fileItem.file
+//   // Create local preview
+//   localFile.value = URL.createObjectURL(file)
+//   preview.value = true
 
-  emit('coverFile', file)
-}
+//   emit('coverFile', file)
+// }
+//
+
+//TODO 文件上传
+const preview = computed(() => {
+  return props.modelValue instanceof File
+})
 </script>
 
 <style lang="scss" scoped>
