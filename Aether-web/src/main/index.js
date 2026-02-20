@@ -4,7 +4,8 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import {onLoginOrRegister , onLoginSuccess, winTitleOp} from './ipc'
+import {onLoginOrRegister , onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore} from './ipc'
+import { createTable } from './db/ADB'
 
 
 const login_width=300;
@@ -137,6 +138,10 @@ function createWindow() {
       }
     }
   });
+
+  onSetLocalStore();
+  
+  onGetLocalStore();
 }
 
 // This method will be called when Electron has finished

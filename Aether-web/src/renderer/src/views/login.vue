@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue'
 import md5 from 'md5'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 const userInfoStore = useUserInfoStore()
@@ -231,11 +231,24 @@ const submit = async () => {
       screenWidth: screenWidth,
       screenHeight: screenHeight
     })
+
+    window.ipcRenderer.send('setLocalStore', { key: 'devWsDomain', value: proxy.Api.devWsDomain })
+    window.ipcRenderer.send('getLocalStore', 'devHttpDomain')
   } else {
     proxy.Message.success('注册成功')
     changeOpType()
   }
 }
+
+const init = () => {
+  window.ipcRenderer.send('setLocalStore', { key: 'prodDomain', value: proxy.Api.prodDomain })
+  window.ipcRenderer.send('setLocalStore', { key: 'devDomain', value: proxy.Api.devDomain })
+  window.ipcRenderer.send('setLocalStore', { key: 'prodwsDomain', value: proxy.Api.prodwsDomain })
+  window.ipcRenderer.send('setLocalStore', { key: 'devWsDomain', value: proxy.Api.devWsDomain })
+}
+onMounted(() => {
+  init()
+})
 </script>
 
 <style lang="scss" scoped>

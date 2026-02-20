@@ -5,6 +5,8 @@ import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 import store from './store'
 import { log } from 'console'
+import { initWs } from './wsClient'
+
 
 // 登录或注册
 const onLoginOrRegister = (callback) => { 
@@ -21,7 +23,9 @@ const onLoginSuccess = (callback) => {
     store.setUserData('token', config.token);
     // TODO 增加用户配置
     callback(config);
-    // TODO 初始化ws连接
+    // NOTE: 初始化ws连接
+    initWs(config, e.sender);
+
   })
 }
 
@@ -33,8 +37,29 @@ const winTitleOp = (callback)=>{
   })
 }
 
+const onSetLocalStore = ()=>{
+  ipcMain.on("setLocalStore",(e,key,value)=>{
+     if (typeof key === 'object') {
+         let data = key;
+         key = data.key;
+         value = data.value;
+     }
+
+     store.setData(key,value);
+    //  console.log("Stored value for key:", key, store.getData(key));
+  })
+}
+
+const onGetLocalStore = ()=>{
+  ipcMain.on("getLocalStore",(e,key)=>{
+    console.log("收到渲染进程的获取事件key：",key);
+    e.sender.send("getLocalStoreCallback","主进程返回的内容："+store.getUserData(key));
+  })
+}
 export{
     onLoginOrRegister,
     onLoginSuccess,
-    winTitleOp
+    winTitleOp,
+    onSetLocalStore,
+    onGetLocalStore
 }
