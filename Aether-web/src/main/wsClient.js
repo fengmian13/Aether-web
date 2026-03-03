@@ -45,7 +45,8 @@ const createWs = () =>{
             await saveMessagebatch(message.extenddata.chatMessageList);
             //更新联系人申请数
             await updateContactNoReadCount({userId:store.getUserId(),noReadCount:message.extenddata.applyCount});
-                //sender.send("reciveMessage:", e.data)
+            //发送消息
+            sender.send("reciveMessage:", {messageType: message.messageType})
             break;
         }
     }

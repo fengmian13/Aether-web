@@ -6,6 +6,8 @@ const NODE_ENV = process.env.NODE_ENV
 import store from './store'
 import { log } from 'console'
 import { initWs } from './wsClient'
+import { addUserSetting } from './db/UserSettingModel'
+import { selectUserSessionList, delChatSession, topChatSession } from './db/ChatSessionUserModel'
 
 
 // 登录或注册
@@ -57,10 +59,35 @@ const onGetLocalStore = ()=>{
     e.sender.send("getLocalStoreCallback","主进程返回的内容："+store.getUserData(key));
   })
 }
+
+//监听渲染端，查sql
+const onLoadSessionData=()=>{
+  ipcMain.on("loadSessionData",async (e)=>{
+    // const dataList = []
+    const result = await selectUserSessionList();
+    e.sender.send("loadSessionDataCallback",dataList)
+  })
+}
+
+const onDelChatSession = ()=>{
+  ipcMain.on("delChatSession",(e,contactId)=>{
+    delChatSession(contactId);
+  })
+}
+
+const onTopChatSession = ()=>{
+  ipcMain.on("topChatSession",(e,{contactId,topType})=>{
+    topChatSession(contactId,topType);
+  })
+}
+
 export{
     onLoginOrRegister,
     onLoginSuccess,
     winTitleOp,
     onSetLocalStore,
-    onGetLocalStore
+    onGetLocalStore,
+    onLoadSessionData,
+    onDelChatSession,
+    onTopChatSession
 }
