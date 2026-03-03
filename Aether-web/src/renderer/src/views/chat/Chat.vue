@@ -11,7 +11,7 @@
       </div>
       <div class="chat-session-list">
         <template v-for="item in chatSessionnList">
-          <ChatSession :data="item" @contextmenu.stop="onContextMenu(item, $event)"></ChatSession>
+          <ChatSession :data="item" @click="chatSessionClickHandler(item)"@contextmenu.stop="onContextMenu(item, $event)"></ChatSession>
         </template>
       </div>
     </template>
@@ -38,23 +38,6 @@ const searchKey = ref();
 const search = () =>{}
 
 const chatSessionList = ref([])
-const onRecivemessage = ()=>{
-  window.ipcRenderer.on("reciveMessage", (e,message)=>{
-    console.log("收到消息：",message);
-    //ws连接成功
-    if(message.messageType==0){
-      loadChatSession();
-    }
-  })
-}
-
-const OnLoadSessionData = ()=>{
-  window.ipcRenderer.on('loadSessionDataCallback', (e,dataList)=>{
-    // NOTE：会话排序
-  sortChatSessionList(chatSessionList.value);
-    chatSessionList.value = dataList;
-  })
-}
 
 const loadChatSession= () =>{
   window.ipcRenderer.send("loadSessionData");
@@ -78,18 +61,84 @@ const delChatSessionList=(contactId)=>{
   })
 }
 
+//当前选中的会话
 const currentChatSession = ref({})
+const messageCountInfo = {
+  totalPage = 0,
+  pageNo:0,
+  maxMessageageId: null,
+  noData: false 
+};
+//点击会话
+const messageList = ref([])
+const chatSessionClickHandler = (item)=>{
+  currentChatSession.value = Object.assign({},item)
+  //TODO 消息记录数要清空
+  messageList.value = [];
 
+  loadChatMessage();
+}
+
+const loadChatMessage = ()=>{
+  if(messageCountInfo.noData){
+    return
+  }
+  messageCountInfo.pageNo++
+  window.ipcRenderer.send("loadChatMessage",{
+    sessionId: currentChatSession.value.sessionId,
+    pageNo:messageCountInfo.pageNo,
+    maxMessageId:messageCountInfo.maxMessageId
+  })
+}
+const onRecivemessage = ()=>{
+  window.ipcRenderer.on("reciveMessage", (e,message)=>{
+    console.log("收到消息：",message);
+    //ws连接成功
+    if(message.messageType==0){
+      loadChatSession();
+    }
+  })
+}
+
+const OnLoadSessionData = ()=>{
+  window.ipcRenderer.on('loadSessionDataCallback', (e,dataList)=>{
+    // NOTE：会话排序
+    sortChatSessionList(chatSessionList.value);
+    chatSessionList.value = dataList;
+  })
+}
+
+const OnLoadChatMessage = ()=>{
+  window.ipcRenderer.on('loadChatMessageCallback', (e,{dataList, pageTotal,pageNo})=>{
+    if(pageNo==pageTotal){
+      messageCountInfo.noData = true
+    }
+    dataList.sort((a,b)=>{
+      return a.messageId - b.messageId
+    })
+    messageList.value = dataList.concat(messageList.value)
+    messageCountInfo.pageNo = pageNo
+    messageCountInfo.pageTotal = pageTotal
+    if(pageNo==1){
+      messageCountInfo.maxMessageageId = dataList.length > 0? dataList[dataList.length - 1].messageId : null
+      // TODO 滚动条滚动到最底部
+
+    }
+
+  })
+}
 onMounted(()=>{
-  onRecivemessage(),
-  OnLoadSessionData(),
+  onRecivemessage()
+  OnLoadSessionData()
   loadChatSession()
+  OnLoadChatMessage()
 })
 
 //监听的销毁
 onUnmounted(()=>{
   window.ipcRenderer.removeAllListeners("loadSessionDataCallback");
   window.ipcRenderer.removeAllListeners("reciveMessage");
+  window.ipcRenderer.removeAllListeners("loadChatMessageCallback");
 })
 
 //右键
