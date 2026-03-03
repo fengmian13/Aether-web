@@ -9,28 +9,16 @@
       <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="0px" @submit.prevent>
         <!--input输入-->
         <el-form-item prop="email">
-          <el-input
-            size="large"
-            clearable
-            placeholder="请输入邮箱"
-            max-length="30"
-            v-model.trim="formData.email"
-            @focus="cleanVerify()"
-          >
+          <el-input size="large" clearable placeholder="请输入邮箱" max-length="30" v-model.trim="formData.email"
+            @focus="cleanVerify()">
             <template #prefix>
               <span class="iconfont icon-email"></span>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="nickName" v-if="!isLogin">
-          <el-input
-            size="large"
-            show-password
-            clearable
-            placeholder="请输入昵称"
-            v-model.trim="formData.nickName"
-            @focus="cleanVerify()"
-          >
+          <el-input size="large" show-password clearable placeholder="请输入昵称" v-model.trim="formData.nickName"
+            @focus="cleanVerify()">
             <template #prefix>
               <span class="iconfont icon-user-nick"></span>
             </template>
@@ -44,28 +32,16 @@
           </el-select>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input
-            size="large"
-            show-password
-            clearable
-            placeholder="请输入密码"
-            v-model.trim="formData.password"
-            @focus="cleanVerify()"
-          >
+          <el-input size="large" show-password clearable placeholder="请输入密码" v-model.trim="formData.password"
+            @focus="cleanVerify()">
             <template #prefix>
               <span class="iconfont icon-password"></span>
             </template>
           </el-input>
         </el-form-item>
         <el-form-item prop="rePassword" v-if="!isLogin">
-          <el-input
-            size="large"
-            show-password
-            clearable
-            placeholder="请再次输入密码"
-            v-model.trim="formData.rePassword"
-            @focus="cleanVerify()"
-          >
+          <el-input size="large" show-password clearable placeholder="请再次输入密码" v-model.trim="formData.rePassword"
+            @focus="cleanVerify()">
             <template #prefix>
               <span class="iconfont icon-password"></span>
             </template>
@@ -73,13 +49,8 @@
         </el-form-item>
         <el-form-item prop="checkcode">
           <div class="check-code-panel">
-            <el-input
-              size="large"
-              clearable
-              placeholder="请输入验证码"
-              v-model.trim="formData.checkcode"
-              @focus="cleanVerify()"
-            >
+            <el-input size="large" clearable placeholder="请输入验证码" v-model.trim="formData.checkcode"
+              @focus="cleanVerify()">
               <template #prefix>
                 <span class="iconfont icon-checkcode"></span>
               </template>
@@ -271,10 +242,12 @@ onMounted(() => {
   margin-bottom: 15px; // 底部间距
   letter-spacing: 1.5px; // 字母间距
   user-select: none;
+
   &.drag {
     cursor: move;
   }
 }
+
 //登录按钮居中
 .login-form {
   .error-msg {
@@ -311,6 +284,7 @@ onMounted(() => {
     }
   }
 }
+
 //提示靠右
 .bottom-link {
   text-align: right;
