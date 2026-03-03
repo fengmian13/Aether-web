@@ -1,0 +1,64 @@
+import{
+    run,
+    queryOne,
+    queryCount,
+    queryAll,
+    insertOrReplace,
+    insertOrIgnore,
+    insert,
+    update
+} from "./ADB"
+import store from "../store"
+
+const selectUsersessionnbyContactId = (contactId)=>{
+    let sql = "select * from chat_sessionn_user where user_id = ? and contact_id = ?";
+    return queryOne(sql,[store.getUserId, contactId])
+}
+
+
+const addChatSession = (sessionInfo) =>{
+    sessionInfo.userId = store.getUserId();
+    insertOrIgnore("chat_sessionn_user", sessionInfo);
+}
+
+const updateChatSession = (sessionInfo)=>{
+    const paramData = {
+        userId:store.getUserId(),
+        contactId: sessionInfo.contactId
+    }
+    const updateInfo = Object.assign({},sessionInfo);
+    updateInfo.userId = null;
+    updateInfo.contactId == null;
+    return update("chat_session_user", updateInfo, paramData)
+}
+
+const saveOrUpdateChatSessionBatch4Init = (chatSessionList)=>{
+    return new Promise(async(resolve,reject)=>{
+        try{
+            for(let i = 0; i < chatSessionList.length; i++){
+                const sessionInfo = chatSessionList[i];
+                sessionInfo.status = 1;
+                let sessionData = await selectUsersessionnbyContactId(sessionInfo.contactId);
+                if(sessionData){
+                    await updateChatSession(sessionInfo);
+                }else{
+                    await addChatSession(sessionInfo);
+                }
+            }
+            resolve();
+        }catch(error){
+        resolve();
+    }
+    })
+}
+
+//更新未读数
+const updateNoReadCount = (contactId, count)=>{
+    let sql = "update chat_session_user set no_read_count = ? where user_id = ? and contact_id = ?";
+    return run(sql,[count,store.getUserId(),contactId]);
+}
+
+export {
+saveOrUpdateChatSessionBatch4Init,
+updateNoReadCount
+}

@@ -21,8 +21,9 @@ const onLoginSuccess = (callback) => {
     console.log('验证码响应:', config)
     store.initUserId(config.userId);
     store.setUserData('token', config.token);
-    // TODO 增加用户配置
+    // NOTE: 增加用户配置
     callback(config);
+    addUserSetting(config.userId,config.email);
     // NOTE: 初始化ws连接
     initWs(config, e.sender);
 
