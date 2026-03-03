@@ -16,15 +16,37 @@
       </div>
     </template>
     <template #right-content>
-      <div v-for="item in chatSessionList">
-        <div>{{ item.contactName}}</div>
+      <div class="title-panel drag" v-if="Object.keys(currentChatSession).length > 0">
+        <div class="title">
+          <span>{{ currentChatSession.contactName }}</span>
+          <span v-if="currentChatSession.contactType == 1">
+            ({{ currentChatSession.memberCount }})
+          </span>
+        </div>
       </div>
+      <div
+        v-if="currentChatSession.contactType == 1"
+        class="iconfont icon-more no-drag"
+        @click="showGroupDetail"
+        ></div>
+        <div class="chat-panel" v-show="Object.keys(currentChatSession).length > 0">
+          <div class="message-panel" id="message-panel">
+            <div
+              class="messahe-item"
+              v-for="(data,index) in messageList"
+              :id="'message' = deta.messageId"
+              >
 
+            </div>
+          </div> 
+          <MessageSend :currentChatSession="currentChatSession"></MessageSend>
+        </div>
     </template>
   </Layout>
 </template>
 
 <script setup>
+import MessageSend from "./MessageSend.vue"
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ChatSession from "./ChatSession.vue"
@@ -75,6 +97,11 @@ const chatSessionClickHandler = (item)=>{
   currentChatSession.value = Object.assign({},item)
   //TODO 消息记录数要清空
   messageList.value = [];
+
+  messageCountInfo.page = 0
+  messageCountInfo.totalPage = 1
+  messageCountInfo.maxMessageageId = null
+  messageCountInfo.noData = false
 
   loadChatMessage();
 }
