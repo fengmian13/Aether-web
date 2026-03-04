@@ -97,6 +97,15 @@ const chatSessionClickHandler = (item) => {
   messageCountInfo.noData = false
 
   loadChatMessage();
+  //设置选中session
+  setSessionSelect({ contactId: item.contactId, sessionId: item.sessionId })
+}
+
+const setSessionSelect = (contactId, sessionId) => {
+  window.ipcRenderer.send('setSessionSelect', {
+    contactId,
+    sessionId
+  })
 }
 
 const loadChatMessage = () => {

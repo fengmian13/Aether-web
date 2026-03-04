@@ -7,8 +7,8 @@ import store from './store'
 import { log } from 'console'
 import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
-import { selectUserSessionList, delChatSession, topChatSession } from './db/ChatSessionUserModel'
-import { selectMessageList } from './db/ChatMessageModel'
+import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll } from './db/ChatSessionUserModel'
+import { saveMessage, selectMessageList } from './db/ChatMessageModel'
 
 // 登录或注册
 const onLoginOrRegister = (callback) => { 
@@ -88,6 +88,30 @@ const onLoadChatMessage = ()=>{
   })
 }
 
+const OnSetSessionSelect = () =>{
+  ipcMain.on("setSessionSelect",async(e, {contactId,sessionId})=>{
+    if(sessionId){
+      store.setUserData("currentSessionId", sessionId)
+      readAll(contactId);//选中会话
+    }else{
+      store.deleteUserData("currentSessionId")
+    }
+    e.sender.send("loadChatMessageCallback", result)
+  })
+};
+
+const onAddlocalMessage = ()=>{
+  ipcMain.on("addlocalMessage",async(e, data)=>{
+    await saveMessage(data);
+      // TODO 保存文本
+    //更新session
+    data.lastReceiveTime = data.sendTime;
+    // TODO 更新会话
+    updateSessionInfo4Message(store.getUserData("currentSessionId"), data);
+    e.sender.send("addLocalCallback", {status: 1, messageId: data.messageId});
+  })
+}
+
 export{
     onLoginOrRegister,
     onLoginSuccess,
@@ -97,5 +121,7 @@ export{
     onLoadSessionData,
     onDelChatSession,
     onTopChatSession,
-    onLoadChatMessage
+    onLoadChatMessage,
+    onAddlocalMessage,
+    OnSetSessionSelect
 }

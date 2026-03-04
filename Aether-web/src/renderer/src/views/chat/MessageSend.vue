@@ -143,12 +143,12 @@ const sendMessageDo = async (messageObj = {
     return;
   }
   if (cleanMsgContent) {
-    messageContent.value = ''
+    msgContent.value = ''
   }
   Object.assign(messageObj, result.data);
   //TODO: 更新列表
   //保存消息到本地
-
+  window.ipcRenderer.send('addlocalMessage', messageObj)
 }
 
 //添加好友
