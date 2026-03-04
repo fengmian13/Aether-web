@@ -10,9 +10,11 @@
         </el-input>
       </div>
       <div class="chat-session-list">
-        <template v-for="item in chatSessionnList">
+        <template v-for="item in chatSessionList">
           <ChatSession :data="item" @click="chatSessionClickHandler(item)"
-            @contextmenu.stop="onContextMenu(item, $event)"></ChatSession>
+            @contextmenu.stop="onContextMenu(item, $event)"
+            :currentSession="item.contactId == currentChatSession.contactId">
+          </ChatSession>
         </template>
       </div>
     </template>
@@ -29,16 +31,21 @@
       <div class="chat-panel" v-show="Object.keys(currentChatSession).length > 0">
         <div class="message-panel" id="message-panel">
           <div class="messahe-item" v-for="(data, index) in messageList" :id="'message' = deta.messageId">
-
+            <template v-if="data.messageType == 1 || data.messageType == 2 || data.messageType == 5">
+              <!-- 1:添加好友，2文本消息，5：媒体消息 -->
+              <ChatMessage :data="data" :currentChatSession="currentChatSession"></ChatMessage>
+            </template>
           </div>
         </div>
-        <MessageSend :currentChatSession="currentChatSession"></MessageSend>
+        <MessageSend :currentChatSession="currentChatSession" @sendMessage4Local="sendMessage4LocalHandler">
+        </MessageSend>
       </div>
     </template>
   </Layout>
 </template>
 
 <script setup>
+import ChatMessage from "./ChatMessage.vue"
 import MessageSend from "./MessageSend.vue"
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
@@ -122,9 +129,22 @@ const loadChatMessage = () => {
 const onRecivemessage = () => {
   window.ipcRenderer.on("reciveMessage", (e, message) => {
     console.log("收到消息：", message);
-    //ws连接成功
-    if (message.messageType == 0) {
-      loadChatSession();
+
+    let curSession = chatSessionIdList.value.find((item) => {
+      return item.sessionId == message.sessionId
+    })
+    if (curSession == null) {
+      chatSessionList.value.push(message.extendData)
+    } else {
+      Object.assign(curSession, message.extendData)
+    }
+    sortChatSessionList(chatSessionList.value);
+    if (message.sessionId != currentChatSession.value.sessionId) {
+      // TODO 未读消息气泡展示
+    } else {
+      Object.assign(currentChatSession.value, message.extendData);
+      messageList.value.push()
+      gotoBottom()
     }
   })
 }
@@ -132,7 +152,7 @@ const onRecivemessage = () => {
 const OnLoadSessionData = () => {
   window.ipcRenderer.on('loadSessionDataCallback', (e, dataList) => {
     // NOTE：会话排序
-    sortChatSessionList(chatSessionList.value);
+    sortChatSessionList(dataList);
     chatSessionList.value = dataList;
   })
 }
@@ -150,10 +170,34 @@ const OnLoadChatMessage = () => {
     messageCountInfo.pageTotal = pageTotal
     if (pageNo == 1) {
       messageCountInfo.maxMessageageId = dataList.length > 0 ? dataList[dataList.length - 1].messageId : null
-      // TODO 滚动条滚动到最底部
-
+      //  滚动条滚动到最底部
+      gotoBottom()
     }
 
+  })
+}
+
+const sendMessage4LocalHandler = (messageObj) => {
+  messageList.value.push(messageObj);
+  const chatSession = chatSessionList.value.find(item => {
+    return item.sessionId == messageObj.sessionId;
+  })
+  if (chatSession) {
+    chatSession.lastMessage = messageObj.lastMessage;
+    chatSession.lastReceiveTime = messageObj.sendTime;
+  }
+  sortChatSessionList(chatSessionList.value)
+  gotoBottom()
+}
+//滚动到底部
+const gotoBottom = () => {
+  nextTick(() => {
+    const items = document.querySelectorAll(".message-item")
+    if (items.length > 0) {
+      setTimeout(() => {
+        items[items.length - 1].scrollIntoView();
+      }, 100);
+    }
   })
 }
 onMounted(() => {

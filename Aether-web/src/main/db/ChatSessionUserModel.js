@@ -1,4 +1,4 @@
-import{
+import {
     run,
     queryOne,
     queryCount,
@@ -10,62 +10,62 @@ import{
 } from "./ADB"
 import store from "../store"
 
-const selectUsersessionnbyContactId = (contactId)=>{
+const selectUserSessionByContactId = (contactId) => {
     let sql = "select * from chat_sessionn_user where user_id = ? and contact_id = ?";
-    return queryOne(sql,[store.getUserId, contactId])
+    return queryOne(sql, [store.getUserId, contactId])
 }
 
 
-const addChatSession = (sessionInfo) =>{
+const addChatSession = (sessionInfo) => {
     sessionInfo.userId = store.getUserId();
     insertOrIgnore("chat_sessionn_user", sessionInfo);
 }
 
-const updateChatSession = (sessionInfo)=>{
+const updateChatSession = (sessionInfo) => {
     const paramData = {
-        userId:store.getUserId(),
+        userId: store.getUserId(),
         contactId: sessionInfo.contactId
     }
-    const updateInfo = Object.assign({},sessionInfo);
+    const updateInfo = Object.assign({}, sessionInfo);
     updateInfo.userId = null;
     updateInfo.contactId == null;
     return update("chat_session_user", updateInfo, paramData)
 }
 
-const saveOrUpdateChatSessionBatch4Init = (chatSessionList)=>{
-    return new Promise(async(resolve,reject)=>{
-        try{
-            for(let i = 0; i < chatSessionList.length; i++){
+const saveOrUpdateChatSessionBatch4Init = (chatSessionList) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            for (let i = 0; i < chatSessionList.length; i++) {
                 const sessionInfo = chatSessionList[i];
                 sessionInfo.status = 1;
-                let sessionData = await selectUsersessionnbyContactId(sessionInfo.contactId);
-                if(sessionData){
+                let sessionData = await selectUserSessionByContactId(sessionInfo.contactId);
+                if (sessionData) {
                     await updateChatSession(sessionInfo);
-                }else{
+                } else {
                     await addChatSession(sessionInfo);
                 }
             }
             resolve();
-        }catch(error){
-        resolve();
-    }
+        } catch (error) {
+            resolve();
+        }
     })
 }
 
 //更新未读数
-const updateNoReadCount = (contactId, count)=>{
+const updateNoReadCount = (contactId, count) => {
     let sql = "update chat_session_user set no_read_count = ? where user_id = ? and contact_id = ?";
-    return run(sql,[count,store.getUserId(),contactId]);
+    return run(sql, [count, store.getUserId(), contactId]);
 }
 
-const selectUserSessionList = ()=>{
+const selectUserSessionList = () => {
     let sql = "select * from chat_session_user where user_id = ? and status = 1";
-    return queryAll(sql,[store.getUserId()]);
+    return queryAll(sql, [store.getUserId()]);
 }
 
-const delChatSession=(contactId)=>{
+const delChatSession = (contactId) => {
     const paramData = {
-        userId:store.getUserId(),
+        userId: store.getUserId(),
         contactId
     }
     const sessionInfo = {
@@ -74,9 +74,9 @@ const delChatSession=(contactId)=>{
     return update("chat_session_user", sessionInfo, paramData);
 }
 
-const topChatSession = (contactId,topType)=>{
+const topChatSession = (contactId, topType) => {
     const paramData = {
-        userId:store.getUserId(),
+        userId: store.getUserId(),
         contactId
     }
     const sessionInfo = {
@@ -85,10 +85,10 @@ const topChatSession = (contactId,topType)=>{
     return update("chat_session_user", sessionInfo, paramData);
 }
 
-const updateSessionInfo4Message = async(currentSessionId, { sessionId, contactName, lastMessage, lastReceiveTime,contactId, memberCount })=>{
+const updateSessionInfo4Message = async (currentSessionId, { sessionId, contactName, lastMessage, lastReceiveTime, contactId, memberCount }) => {
     const params = [lastMessage, lastReceiveTime];
     let sql = "update chat_session_user set last_message=?,last_receive_time=?,status = 1";
-    if (contactName){
+    if (contactName) {
         sql = sql + ",contact_name = ?"
         params.push(contactName);
     }
@@ -108,17 +108,32 @@ const updateSessionInfo4Message = async(currentSessionId, { sessionId, contactNa
 
 }
 
-const readAll = (contactId) =>{
+const readAll = (contactId) => {
     let sql = "update chat_session_user set no_read_count = 0 where user_id=? and contact_id=?"
     return run(sql, [store.getUserId(), contactId]);
 }
 
+const saveOrUpdate4Message = (currentSessionId, sessionInfo) => {
+    return new Promise(async (resolve, reject) => {
+        let sessionData = await selectUserSessionByContactId(sessionInfo.contactId);
+        if (sessionData) {
+            updateSessionInfo4Message(currentSessionId, sessionInfo);
+        } else {
+            sessionInfo.noReadCount = 1;
+            await addChatSession(sessionInfo);
+        }
+        resolve();
+    })
+}
+
 export {
-saveOrUpdateChatSessionBatch4Init,
-updateNoReadCount,
-selectUserSessionList,
-delChatSession,
-topChatSession,
-updateSessionInfo4Message,
-readAll
+    saveOrUpdateChatSessionBatch4Init,
+    updateNoReadCount,
+    selectUserSessionList,
+    delChatSession,
+    topChatSession,
+    updateSessionInfo4Message,
+    readAll,
+    saveOrUpdate4Message,
+    selectUserSessionByContactId
 }
