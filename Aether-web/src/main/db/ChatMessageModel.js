@@ -68,7 +68,7 @@ const selectMessageList = (query) => {
         }
         params.push(offset);
         params.push(limit);
-        sql = sql + " order by message_id limit ?, ?";
+        sql = sql + " order by message_id desc limit ?, ?";
         const dataList = await queryAll(sql, params);
         resolve({
             dataList,

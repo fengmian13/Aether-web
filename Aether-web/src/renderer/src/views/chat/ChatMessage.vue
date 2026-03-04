@@ -10,7 +10,13 @@
             </div>
             <template v-else>
                 <div class="content" v-html="data.messageContent" v-if="data.messageType != 5"></div>
-                <div class="content" v-else>媒体消息</div>
+                <div class="content" v-else>
+                    <template v-if="data.fileType == 0">
+                        <ChatMessageImage :data="data"></ChatMessageImage>
+                    </template>
+                    <template v-if="data.fileType == 1">视频消息</template>
+                    <template v-if="data.fileType == 2"></template>
+                </div>
             </template>
         </div>
         <Avatar :width="35" :userId="userInfoStore.getInfo().userId" />
@@ -37,7 +43,11 @@
             </div>
             <template v-else>
                 <div class="content" v-html="data.messageContent" v-if="data.messageType != 5"></div>
-                <div class="content" v-else>媒体消息</div>
+                <div class="content" v-else>
+                    <template v-if="data.fileType == 0"></template>
+                    <template v-if="data.fileType == 1"></template>
+                    <template v-if="data.fileType == 2"></template>
+                </div>
             </template>
         </div>
     </div>
@@ -51,6 +61,7 @@ const route = useRoute()
 const router = useRouter()
 
 import { useUserInfoStore } from '@/stores/UserInfoStore'
+import ChatMessageImage from "./ChatMessageImage.vue";
 const UserInfoStore = useUserInfoStore
 
 const props = defineProps({

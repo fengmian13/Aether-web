@@ -177,6 +177,19 @@ const OnLoadChatMessage = () => {
   })
 }
 
+const onAddLoaclMessage = () => {
+  window.ipcRenderer.on('addLocalCallback', (e, { messageId, status }) => {
+    const findMessage = messageList.value.find((item) => {
+      if (item.messageId == messageId) {
+        return item
+      }
+    })
+    if (findMessage != null) {
+      findMessage.status = status
+    }
+  })
+}
+
 const sendMessage4LocalHandler = (messageObj) => {
   messageList.value.push(messageObj);
   const chatSession = chatSessionList.value.find(item => {
@@ -205,6 +218,7 @@ onMounted(() => {
   OnLoadSessionData()
   loadChatSession()
   OnLoadChatMessage()
+  onAddLoaclMessage()
 })
 
 //监听的销毁
@@ -212,6 +226,7 @@ onUnmounted(() => {
   window.ipcRenderer.removeAllListeners("loadSessionDataCallback");
   window.ipcRenderer.removeAllListeners("reciveMessage");
   window.ipcRenderer.removeAllListeners("loadChatMessageCallback");
+  window.ipcRenderer.removeAllListeners("addLocalCallback");
 })
 
 //右键

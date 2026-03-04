@@ -10,6 +10,10 @@ import store from "./store";
 const moment = require('moment');
 moment.locale('zh-cn', {});
 
+//express 服务器
+const express = require('express')
+const expressServer = express();
+
 import { selectByMessageId } from "./db/ChatMessageModel";
 import { resourcesPath } from "process";
 
@@ -17,6 +21,10 @@ const cover_image_suffix = "_cover.png";
 const image_suffix = ".png";
 const ffprobePath = "/assets/ffprobe.exe";
 const ffmpegPath = "/assets/ffmpeg.exe"
+
+const getDomain = () => {
+    return NODE_ENV !== "development" ? store.getData("prodDomain") : store.getData("devDomain");
+}
 
 const mkdirs = (dir) => {
     if (!fs.existsSync(dir)) {
@@ -37,23 +45,77 @@ const getResourcesPath = () => {
 }
 
 const getFFprobePath = () => {
-    return path.join(getFFprobePath(), ffprobePath);
+    return path.join(getResourcesPath(), ffprobePath);
 }
 const getFFmegPath = () => {
-    return path, join(getResourcesPath, ffmpegPath)
+    return path, join(getResourcesPath(), ffmpegPath)
 }
+
+const execCommand = (command) => {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            console.log("ffmpeg命令:", command);
+            if (error) {
+                console.error("执行命令失败", error);
+                reject(error); // 👈 建议添加：错误时拒绝 Promise
+            }
+            resolve(stdout);
+        });
+    });
+};
 
 const saveFile2Local = (messageId, filePath, fileType) => {
     return new Promise(async (resolve, reject) => {
+        let ffmpegPath = getFFmegPath()
         let savePath = await getLocalFilePath("chat", false, messageId);
         fs.copyFileSync(filePath, savePath);
+        let coverPath = null;
         if (fileType != 2) {
-
+            let command = `${getFFprobePath()} -v error -select_streams v:0 -show_entries stream=codec_name "${filePath}"`;
+            let result = await execCommand(command);
+            result = result.replaceAll("\r\n", "");
+            result = result.substring(result.indexOf("=") + 1);
+            let codec = result.substring(0, result.indexOf("["));
+            if ("hevc" === codec) {
+                command = `${ffmpegPath} -y -i "${filePath}" -c:v libx264 -crf 20 "${savePath}"`;
+                await execCommand(command);
+            }
+            coverPath = savePath + cover_image_suffix;
+            command = `${ffmpegPath} -i "${savePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
+            await execCommand(command);
         }
+        uploadFile(messageId, savePath, coverPath);
         resolve();
     })
 }
 
+const uploadFile = (messageId, savePath, coverPath) => {
+    const formData = new FormData();
+    formData.append("messageId", messageId);
+    formData.append("file", fs.createReadStream(savePath));
+
+    if (coverPath) {
+        formData.append("cover", fs.createReadStream(coverPath));
+    }
+
+    const url = `${getDomain()}/api/chat/uploadFile`;
+    const token = store.getUserData("token");
+    const config = {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            "token": token
+        }
+    };
+
+    axios.post(url, formData, config)
+        .then((response) => {
+            // 可在此处理成功响应，例如：
+            console.log("文件上传成功", response.data);
+        })
+        .catch((error) => {
+            console.log("文件上传失败", error);
+        });
+};
 const getLocalFilePath = (partType, showCover, fileId) => {
     return new Promise(async (resolve, reject) => {
         let localFolder = store.getUserData("localFileFolder");
@@ -76,6 +138,56 @@ const getLocalFilePath = (partType, showCover, fileId) => {
 
 }
 
+let server = null;
+
+const startLocalServer = (serverPort) => {
+    server = expressServer.listen(serverPort, () => {
+        console.log("本地服务在http://127.0.0.1:" + serverPort + "开启");
+    });
+};
+
+const closeLocalServer = () => {
+    if (server) {
+        server.close();
+    }
+};
+
+//express 本地服务器
+const FILE_TYPE_CONTENT_TYPE = {
+    "0": "image/",
+    "1": "video",
+    "2": "application/octet-stream"
+}
+
+expressServer.get("/file", async (req, res) => {
+    let { partType, fileType, fileId, showCover, forceGet } = req.query;
+    if (!partType || !fileId) {
+        res.send("请求参数错误");
+        return;
+    }
+    showCover = showCover == undefined ? false : Boolean(showCover);
+    const localPath = await getLocalFilePath(partType, showCover, fileId);
+    if (!fs.existsSync(localPath) || forceGet == "true") {
+        if (forceGet == "true" && partType == "avatar") {
+            await downloadFile()
+        }
+        await downloadFile();
+    }
+    const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
+    let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader('Content-Type', contentType);
+    fs.createReadStream(localPath).pipe(res);
+    return;
+})
+
+//从服务器下载文件
+const downloadFile = () => {
+
+}
+
 export {
-    saveFile2Local
+    saveFile2Local,
+    startLocalServer,
+    closeLocalServer
 }
