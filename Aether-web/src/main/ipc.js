@@ -8,24 +8,25 @@ import { log } from 'console'
 import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll } from './db/ChatSessionUserModel'
-import { saveMessage, selectMessageList } from './db/ChatMessageModel'
+import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
+import { saveFile2Local } from './file'
 
 // 登录或注册
-const onLoginOrRegister = (callback) => { 
-    ipcMain.on("loginOrRegister", (e, isLogin)=>{ 
+const onLoginOrRegister = (callback) => {
+  ipcMain.on("loginOrRegister", (e, isLogin) => {
     callback(isLogin);
   })
 }
 //登录成功
-const onLoginSuccess = (callback) => { 
-    ipcMain.on("openChat", (e, config)=>{ 
+const onLoginSuccess = (callback) => {
+  ipcMain.on("openChat", (e, config) => {
     //输出日志
     console.log('验证码响应:', config)
     store.initUserId(config.userId);
     store.setUserData('token', config.token);
     // NOTE: 增加用户配置
     callback(config);
-    addUserSetting(config.userId,config.email);
+    addUserSetting(config.userId, config.email);
     // NOTE: 初始化ws连接
     initWs(config, e.sender);
 
@@ -33,95 +34,102 @@ const onLoginSuccess = (callback) => {
 }
 
 //窗口操作
-const winTitleOp = (callback)=>{
-  ipcMain.on("winTitleOp",(e,data)=>{
-    callback(e,data);
+const winTitleOp = (callback) => {
+  ipcMain.on("winTitleOp", (e, data) => {
+    callback(e, data);
     // console.log("测试界面按钮响应")
   })
 }
 
-const onSetLocalStore = ()=>{
-  ipcMain.on("setLocalStore",(e,key,value)=>{
-     if (typeof key === 'object') {
-         let data = key;
-         key = data.key;
-         value = data.value;
-     }
+const onSetLocalStore = () => {
+  ipcMain.on("setLocalStore", (e, key, value) => {
+    if (typeof key === 'object') {
+      let data = key;
+      key = data.key;
+      value = data.value;
+    }
 
-     store.setData(key,value);
+    store.setData(key, value);
     //  console.log("Stored value for key:", key, store.getData(key));
   })
 }
 
-const onGetLocalStore = ()=>{
-  ipcMain.on("getLocalStore",(e,key)=>{
-    console.log("收到渲染进程的获取事件key：",key);
-    e.sender.send("getLocalStoreCallback","主进程返回的内容："+store.getUserData(key));
+const onGetLocalStore = () => {
+  ipcMain.on("getLocalStore", (e, key) => {
+    console.log("收到渲染进程的获取事件key：", key);
+    e.sender.send("getLocalStoreCallback", "主进程返回的内容：" + store.getUserData(key));
   })
 }
 
 //监听渲染端，查sql
-const onLoadSessionData=()=>{
-  ipcMain.on("loadSessionData",async (e)=>{
+const onLoadSessionData = () => {
+  ipcMain.on("loadSessionData", async (e) => {
     // const dataList = []
     const result = await selectUserSessionList();
-    e.sender.send("loadSessionDataCallback",dataList)
+    e.sender.send("loadSessionDataCallback", dataList)
   })
 }
 
-const onDelChatSession = ()=>{
-  ipcMain.on("delChatSession",(e,contactId)=>{
+const onDelChatSession = () => {
+  ipcMain.on("delChatSession", (e, contactId) => {
     delChatSession(contactId);
   })
 }
 
-const onTopChatSession = ()=>{
-  ipcMain.on("topChatSession",(e,{contactId,topType})=>{
-    topChatSession(contactId,topType);
+const onTopChatSession = () => {
+  ipcMain.on("topChatSession", (e, { contactId, topType }) => {
+    topChatSession(contactId, topType);
   })
 }
 
-const onLoadChatMessage = ()=>{
-  ipcMain.on("loadChatMessage",async(e, data)=>{
+const onLoadChatMessage = () => {
+  ipcMain.on("loadChatMessage", async (e, data) => {
     const result = await selectMessageList(data);
     e.sender.send("loadChatMessageCallback", result)
   })
 }
 
-const OnSetSessionSelect = () =>{
-  ipcMain.on("setSessionSelect",async(e, {contactId,sessionId})=>{
-    if(sessionId){
+const OnSetSessionSelect = () => {
+  ipcMain.on("setSessionSelect", async (e, { contactId, sessionId }) => {
+    if (sessionId) {
       store.setUserData("currentSessionId", sessionId)
       readAll(contactId);//选中会话
-    }else{
+    } else {
       store.deleteUserData("currentSessionId")
     }
     e.sender.send("loadChatMessageCallback", result)
   })
 };
 
-const onAddlocalMessage = ()=>{
-  ipcMain.on("addlocalMessage",async(e, data)=>{
+const onAddlocalMessage = () => {
+  ipcMain.on("addlocalMessage", async (e, data) => {
     await saveMessage(data);
-      // TODO 保存文本
+    // NOTE 保存文件
+    if (data.messageType == 5) {
+      await saveFile2Local(data.messageId, data.filePath, data.fileType);
+      const updateInfo = {
+        status: 1
+      }
+      await updateMessage(updateInfo, { messageId: data.messageId });
+    }
     //更新session
     data.lastReceiveTime = data.sendTime;
     // TODO 更新会话
     updateSessionInfo4Message(store.getUserData("currentSessionId"), data);
-    e.sender.send("addLocalCallback", {status: 1, messageId: data.messageId});
+    e.sender.send("addLocalCallback", { status: 1, messageId: data.messageId });
   })
 }
 
-export{
-    onLoginOrRegister,
-    onLoginSuccess,
-    winTitleOp,
-    onSetLocalStore,
-    onGetLocalStore,
-    onLoadSessionData,
-    onDelChatSession,
-    onTopChatSession,
-    onLoadChatMessage,
-    onAddlocalMessage,
-    OnSetSessionSelect
+export {
+  onLoginOrRegister,
+  onLoginSuccess,
+  winTitleOp,
+  onSetLocalStore,
+  onGetLocalStore,
+  onLoadSessionData,
+  onDelChatSession,
+  onTopChatSession,
+  onLoadChatMessage,
+  onAddlocalMessage,
+  OnSetSessionSelect
 }

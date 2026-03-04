@@ -55,6 +55,7 @@
 
 <script setup>
 import emojiList from '@/utils/Emoji.js'
+import { getFileType } from '@/utils/Constants.js';
 import SearchAdd from '@/Views/contact/SearchAdd.vue'
 import { ref, reactive, getCurrentInstance, nextTick } from "vue"
 const { proxy } = getCurrentInstance();
@@ -150,6 +151,27 @@ const sendMessageDo = async (messageObj = {
   emit("sendMessage4Local", messageObj);
   //保存消息到本地
   window.ipcRenderer.send('addlocalMessage', messageObj)
+}
+const uploadRef = ref();
+const uploadFile = (file) => {
+  uploadFileDo(file.file);
+  uploadRef.value.clearFiles();
+}
+//根据文件名的后缀判断文件类型
+const getFileTypeByName = (fileName) => {
+  const fileSuffix = fileName.substr(fileName.lastIndexOf(".") + 1);
+  return getFileType(fileSuffix);
+}
+const uploadFileDo = (file) => {
+  const fileType = getFileTypeByName(file.name);
+  sendMessageDo({
+    messageContent: '[' + getFileType(fileType) + ']',
+    messageType: 5,
+    fileSize: file.size,
+    fileName: file.name,
+    filePath: file.pyth,
+    fileType: fileType
+  }, false)
 }
 
 //添加好友
