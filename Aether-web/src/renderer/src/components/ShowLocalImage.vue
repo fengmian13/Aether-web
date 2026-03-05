@@ -10,6 +10,8 @@
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick, computed } from 'vue'
 const { proxy } = getCurrentInstance()
+import { useGlobalInfoStore } from '@/stores/GlobalInfoStore'
+const globalInfoStore = useGlobalInfoStore()
 
 const props = defineProps({
   width: {
@@ -46,11 +48,13 @@ const serverUrl = computed(() => {
   if (!props.fileId) {
     return noData
   }
-  let url = `${proxy.Api.prodDomain}/file/getResource?sourceName=${props.partType}&fileId=${props.fileId}`
-  if (props.forceGet) {
-    url += `&_t=${new Date().getTime()}`
-  }
-  return url
+  // let url = `${proxy.Api.prodDomain}/file/getResource?sourceName=${props.partType}&fileId=${props.fileId}`
+  // if (props.forceGet) {
+  //   url += `&_t=${new Date().getTime()}`
+  // }
+  // return url
+  const serverPort = globalInfoStore.getInfo("localServerPort")
+  return `http://127.0.0.1:${serverPort}/file?fileId=${props.fileId}&partType=${props.partType}&fileType=${props.fileType}&showCover=true&forceGet=${props.forceGet}&${new Date().getTime()}`
 })
 </script>
 
@@ -66,11 +70,13 @@ const serverUrl = computed(() => {
   max-width: 170px;
   max-height: 170px;
   background: #ddd;
+
   .icon-image-error {
     margin: 0px auto;
     font-size: 30px;
     color: #838383;
   }
+
   .play-panel {
     z-index: 2;
     position: absolute;
@@ -82,10 +88,12 @@ const serverUrl = computed(() => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+
     .icon-video-play {
       font-size: 35px;
       color: #fff;
     }
+
     &:hover {
       opacity: 0.8;
     }

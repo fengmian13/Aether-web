@@ -4,22 +4,16 @@
       <div></div>
       <div class="menu-list">
         <template v-for="item in menuList" :key="item.name">
-          <div
-            :class="['tab-item iconfont', item.icon, item.path == currentMenu.path ? 'active' : '']"
-            v-if="item.position === 'top'"
-            @click="changeMenu(item)"
-          >
+          <div :class="['tab-item iconfont', item.icon, item.path == currentMenu.path ? 'active' : '']"
+            v-if="item.position === 'top'" @click="changeMenu(item)">
             <template v-if="item.name == 'chat'"> </template>
           </div>
         </template>
       </div>
       <div class="menu-list menu-bottom">
         <template v-for="item in menuList" :key="item.name">
-          <div
-            :class="['tab-item iconfont', item.icon, item.path == currentMenu.path ? 'active' : '']"
-            v-if="item.position === 'bottom'"
-            @click="changeMenu(item)"
-          ></div>
+          <div :class="['tab-item iconfont', item.icon, item.path == currentMenu.path ? 'active' : '']"
+            v-if="item.position === 'bottom'" @click="changeMenu(item)"></div>
         </template>
       </div>
     </div>
@@ -44,6 +38,9 @@ const router = useRouter()
 
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 const userInfoStore = useUserInfoStore()
+
+import { useGlobalInfoStore } from '@/stores/GlobalInfoStore'
+const globalInfoStore = useGlobalInfoStore()
 
 const menuList = ref([
   {
@@ -82,9 +79,13 @@ const getLoginInfo = async () => {
     return
   }
   userInfoStore.setUserInfo(result.data)
+  window.ipcRenderer.send("getLocalStore", result.data.userId + 'localServerPort');
 }
 onMounted(() => {
   getLoginInfo()
+  window.ipcRenderer.on("getLocalStoreCallback", (e, serverPort) => {
+    globalInfoStore.setInfo("localServerPort", serverPort);
+  });
 })
 </script>
 
@@ -123,6 +124,7 @@ onMounted(() => {
       height: 100%;
       object-fit: cover;
     }
+
     .avatar-placeholder {
       width: 100%;
       height: 100%;
@@ -138,7 +140,8 @@ onMounted(() => {
 
 .menu-list {
   width: 100%;
-  flex: 1; /* 让上方的菜单列表占据剩余空间，从而挤压下方菜单到底部 */
+  flex: 1;
+  /* 让上方的菜单列表占据剩余空间，从而挤压下方菜单到底部 */
 }
 
 .tab-item {

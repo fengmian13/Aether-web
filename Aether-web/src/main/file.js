@@ -121,7 +121,11 @@ const getLocalFilePath = (partType, showCover, fileId) => {
         let localFolder = store.getUserData("localFileFolder");
         let localPath = null;
         if (partType == "avatar") {
-
+            localFolder = localFolder + "/avatar/"
+            if (!fs.existsSync(localFolder)) {
+                mkdirs(localFolder);
+            }
+            localPath = localFolder + fileId + image_suffix;
         } else if (partType == "chat") {
             let messageInfo = await selectByMessageId(fileId);
             const month = moment(Number.parseInt(messageInfo.sendTime)).format("YYYYMM");
@@ -169,9 +173,9 @@ expressServer.get("/file", async (req, res) => {
     const localPath = await getLocalFilePath(partType, showCover, fileId);
     if (!fs.existsSync(localPath) || forceGet == "true") {
         if (forceGet == "true" && partType == "avatar") {
-            await downloadFile()
+            await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
         }
-        await downloadFile();
+        await downloadFile(fileId, showCover, localPath, partType);
     }
     const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
     let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
@@ -182,8 +186,37 @@ expressServer.get("/file", async (req, res) => {
 })
 
 //从服务器下载文件
-const downloadFile = () => {
-
+const downloadFile = (fileId, showCover, savePath, partType) => {
+    showCover = showCover + "";
+    let url = `${getDomain()}/api/chat/downloadFile`
+    const token = store.getUserData('token');
+    return new Promise(async (resolve, reject) => {
+        const config = {
+            responseType: "stream",
+            header: { 'Content-Type': 'multipart/form-data', 'token': token }
+        }
+        let response = await axios.post(url, {
+            fileId,
+            showCover
+        }, config);
+        const folder = savePath.substring(0, savePath.lastIndexOf("/"));
+        mkdirs(folder);
+        const stream = fs.createReadStream(savePath);
+        if (response.headers['content-type'] == "application/json") {
+            let resourcesPath = getResourcesPath();
+            if (partType == "avatar") {
+                fs.createReadStream(resourcesPath + "/assets/user.png").pipe(stream);
+            } else {
+                fs.createReadStream(resourcesPath + "/assets/404.png").pipe(stream);
+            }
+        } else {
+            response.data.pipe(stream);
+        }
+        stream.on("finish", () => {
+            stream.close();
+            resolve();
+        })
+    })
 }
 
 export {
