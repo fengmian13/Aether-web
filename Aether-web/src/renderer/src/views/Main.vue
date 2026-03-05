@@ -1,7 +1,9 @@
 <template>
   <div class="main">
     <div class="left-sider">
-      <div></div>
+      <div>
+        <Avatar :userId="userInfoStore.getInfo().userId" :width="35" :showDetail="false"></Avatar>
+      </div>
       <div class="menu-list">
         <template v-for="item in menuList" :key="item.name">
           <div :class="['tab-item iconfont', item.icon, item.path == currentMenu.path ? 'active' : '']"

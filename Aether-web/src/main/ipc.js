@@ -9,7 +9,7 @@ import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local } from './file'
+import { saveFile2Local, createCover } from './file'
 
 // 登录或注册
 const onLoginOrRegister = (callback) => {
@@ -120,6 +120,13 @@ const onAddlocalMessage = () => {
   })
 }
 
+const onCreateCover = () => {
+  ipcMain.on("createCover", async (e, localFilePath) => {
+    const stream = await createCover(localFilePath);
+    e.sender.send("createCoverCallback", stream);
+  });
+};
+
 export {
   onLoginOrRegister,
   onLoginSuccess,
@@ -131,5 +138,6 @@ export {
   onTopChatSession,
   onLoadChatMessage,
   onAddlocalMessage,
-  OnSetSessionSelect
+  OnSetSessionSelect,
+  onCreateCover
 }

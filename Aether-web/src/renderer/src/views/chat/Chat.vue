@@ -40,11 +40,15 @@
         <MessageSend :currentChatSession="currentChatSession" @sendMessage4Local="sendMessage4LocalHandler">
         </MessageSend>
       </div>
+      <div class="chat-blank" v-show="Object.keys(currentChatSession).length == 0">
+        <Blank></Blank>
+      </div>
     </template>
   </Layout>
 </template>
 
 <script setup>
+import Blank from '@/components/Blank.vue'
 import ChatMessage from "./ChatMessage.vue"
 import MessageSend from "./MessageSend.vue"
 import ContextMenu from '@imengyu/vue3-context-menu'
@@ -130,7 +134,19 @@ const onRecivemessage = () => {
   window.ipcRenderer.on("reciveMessage", (e, message) => {
     console.log("收到消息：", message);
 
-    let curSession = chatSessionIdList.value.find((item) => {
+    if (message.messageType == 6) {
+      const localMessage = messageList.value.find(item => {
+        if (item.messageId == message.messageId) {
+          return item;
+        }
+      })
+      if (localMessage != null) {
+        localMessage.status = 1
+      }
+      return
+    }
+
+    let curSession = chatSessionList.value.find((item) => {
       return item.sessionId == message.sessionId
     })
     if (curSession == null) {

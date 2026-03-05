@@ -1,21 +1,17 @@
 <template>
-  <div
-    class="user-avatar"
-    @click="showDetailHandler"
-    :style="{ width: width + 'px', height: width + 'px', 'border-radius': borderRadius + 'px' }"
-  >
-    <ShowLocalImage
-      :width="width"
-      :fileId="userId"
-      partType="avatar"
-      :forceGet="true"
-    ></ShowLocalImage>
+  <div class="user-avatar" @click="showDetailHandler"
+    :style="{ width: width + 'px', height: width + 'px', 'border-radius': borderRadius + 'px' }">
+    <ShowLocalImage :width="width" :fileId="userId" partType="avatarInfoStore.getFoceReload(userId)" :forceGet="true">
+    </ShowLocalImage>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
 const { proxy } = getCurrentInstance()
+
+import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
+const avatarInfoStore = useAvatarInfoStore()
 
 const props = defineProps({
   userId: {

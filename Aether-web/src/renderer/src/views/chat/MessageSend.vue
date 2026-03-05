@@ -74,7 +74,7 @@ const props = defineProps({
 })
 
 
-const msgContent = ref()
+const msgContent = ref('')
 const showEmojiPopover = ref(false)
 const showSendMsgPopover = ref(false)
 const hidePopover = () => {
@@ -181,6 +181,23 @@ const addContact = (contactId, code) => {
     contactId,
     contactType: code == 902 ? 'USER' : 'GROUP'
   })
+}
+
+const showEmojiPopoverHandler = () => {
+  showEmojiPopover.value = true;
+}
+
+const sendEmoji = (emoji) => {
+  msgContent.value = msgContent.value + emoji;
+  showEmojiPopover.value = false;
+}
+
+const openPopover = () => {
+  document.addEventListener("click", hidePopover, false);
+}
+
+const closePopover = () => {
+  document.removeEventListener("click", hidePopover, false)
 }
 </script>
 

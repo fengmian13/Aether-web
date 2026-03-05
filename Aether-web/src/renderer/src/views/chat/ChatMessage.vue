@@ -14,8 +14,12 @@
                     <template v-if="data.fileType == 0">
                         <ChatMessageImage :data="data"></ChatMessageImage>
                     </template>
-                    <template v-if="data.fileType == 1">视频消息</template>
-                    <template v-if="data.fileType == 2"></template>
+                    <template v-if="data.fileType == 1">
+                        <ChatMessageVideo :data="data"></ChatMessageVideo>
+                    </template>
+                    <template v-if="data.fileType == 2">
+                        <ChatMessageFile :data="data"></ChatMessageFile>
+                    </template>
                 </div>
             </template>
         </div>
@@ -44,9 +48,15 @@
             <template v-else>
                 <div class="content" v-html="data.messageContent" v-if="data.messageType != 5"></div>
                 <div class="content" v-else>
-                    <template v-if="data.fileType == 0"></template>
-                    <template v-if="data.fileType == 1"></template>
-                    <template v-if="data.fileType == 2"></template>
+                    <template v-if="data.fileType == 0">
+                        <ChatMessageImage :data="data"></ChatMessageImage>
+                    </template>
+                    <template v-if="data.fileType == 1">
+                        <ChatMessageVideo :data="data"></ChatMessageVideo>
+                    </template>
+                    <template v-if="data.fileType == 2">
+                        <ChatMessageFile :data="data"></ChatMessageFile>
+                    </template>
                 </div>
             </template>
         </div>
@@ -62,6 +72,8 @@ const router = useRouter()
 
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import ChatMessageImage from "./ChatMessageImage.vue";
+import ChatMessageVideo from "./ChatMessageVideo.vue";
+import ChatMessageFile from "./ChatMessageFile.vue";
 const UserInfoStore = useUserInfoStore
 
 const props = defineProps({

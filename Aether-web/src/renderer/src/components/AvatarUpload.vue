@@ -6,33 +6,22 @@
         <ShowLocalImage :fileId="modelValue" partType="avatar" :width="40" v-else></ShowLocalImage>
       </template>
       <template v-else>
-        <el-upload
-          name="file"
-          :show-file-list="false"
-          accept=".png,.PNG,.jpg,.JPG,.jpeg,.JPEG,.gif,.GIF,.bmp,.BMP"
-          :multiple="false"
-          :http-request="uploadImage"
-        >
+        <el-upload name="file" :show-file-list="false" accept=".png,.PNG,.jpg,.JPG,.jpeg,.JPEG,.gif,.GIF,.bmp,.BMP"
+          :multiple="false" :http-request="uploadImage">
           <span class="iconfont icon-add"></span>
         </el-upload>
       </template>
     </div>
     <div class="select-btn">
-      <el-upload
-        name="file"
-        :show-file-list="false"
-        accept=".png,.PNG,.jpg,.JPG,.jpeg,.JPEG,.gif,.GIF,.bmp,.BMP"
-        :multiple="false"
-        :http-request="uploadImage"
-      >
-        <el-button type="primary" size="small">上传头像</el-button></el-upload
-      >
+      <el-upload name="file" :show-file-list="false" accept=".png,.PNG,.jpg,.JPG,.jpeg,.JPEG,.gif,.GIF,.bmp,.BMP"
+        :multiple="false" :http-request="uploadImage">
+        <el-button type="primary" size="small">上传头像</el-button></el-upload>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, onMounted, watch } from 'vue'
+import { ref, reactive, getCurrentInstance, onMounted, watch, onUnmounted } from 'vue'
 import ShowLocalImage from './ShowLocalImage.vue'
 
 const { proxy } = getCurrentInstance()
@@ -44,23 +33,43 @@ const props = defineProps({
   }
 })
 
-// const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['coverFile'])
 // const preview = ref(false)
-// const localFile = ref(null)
+const localFile = ref(null)
 
-// const uploadImage = async (fileItem) => {
-//   const file = fileItem.file
-//   // Create local preview
-//   localFile.value = URL.createObjectURL(file)
-//   preview.value = true
 
-//   emit('coverFile', file)
-// }
-//
-
-//TODO 文件上传
+// 文件上传
 const preview = computed(() => {
   return props.modelValue instanceof File
+})
+
+
+const uploadImage = async (file) => {
+  file = file.file
+  window.ipcRenderer.send("createCover", file.path);
+}
+
+onMounted(() => {
+  window.ipcRenderer.on('createCoverCallback', (e, { avatarStream, coverStream }) => {
+    // 处理封面图
+    const coverBlob = new Blob([coverStream], { type: 'image/png' });
+    const coverFile = new File([coverBlob], 'thumbnail.jpg');
+    let img = new FileReader();
+    img.readAsDataURL(coverFile);
+    img.onload = ({ target }) => {
+      localFile.value = target.result;
+    };
+
+    // 处理头像缩略图
+    const avatarBlob = new Blob([avatarStream], { type: 'image/png' });
+    const avatarFile = new File([avatarBlob], 'thumbnail2.jpg');
+
+    // 向父组件 emit 事件，传递两个文件对象
+    emit('coverFile', { avatarFile, coverFile });
+  });
+});
+onUnmounted(() => {
+  window.ipcRenderer.removeAllListeners('createCoverCallback')
 })
 </script>
 

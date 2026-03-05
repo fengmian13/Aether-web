@@ -46,9 +46,14 @@ const createWs = () => {
                 //更新联系人申请数
                 await updateContactNoReadCount({ userId: store.getUserId(), noReadCount: message.extendData.applyCount });
                 //发送消息
-                sender.send("reciveMessage:", { messageType: message.messageType })
+                sender.send("reciveMessage", { messageType: message.messageType })
                 break;
-            case 2:
+            case 6: //文件上传完成
+                updateMessage({ status: message.status }, { messageId: message.messageId });
+                sender.send("reciveMessage", message);
+                break;
+            case 2://聊天消息
+            case 5://图片视频消息
                 if (message.sendUserId == store.getUserId() && message.contactType == 1) {
                     break;
                 }

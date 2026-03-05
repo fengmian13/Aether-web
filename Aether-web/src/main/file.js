@@ -137,6 +137,9 @@ const getLocalFilePath = (partType, showCover, fileId) => {
             fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf("."));
             localPath = localFolder + "/" + fileId + fileSuffix;
         }
+        if (showCover) {
+            localPath = localPath + cover_image_suffix;
+        }
         resolve(localPath);
     })
 
@@ -219,8 +222,27 @@ const downloadFile = (fileId, showCover, savePath, partType) => {
     })
 }
 
+const createCover = (filePath) => {
+    return new Promise(async (resolve, reject) => {
+        let ffmpegPath = getFFmegPath();
+        let avatarPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp");
+        let command = `${ffmpegPath} -i "${filePath}" "${avatarPath}" -y`;
+        await execCommand(command);
+
+        let coverPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp_cover");
+        command = `${ffmpegPath} -i "${filePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
+        await execCommand(command);
+
+        resolve({
+            avatarStream: fs.readFileSync(avatarPath),
+            coverStream: fs.readFileSync(coverPath)
+        });
+    });
+};
+
 export {
     saveFile2Local,
     startLocalServer,
-    closeLocalServer
+    closeLocalServer,
+    createCover
 }

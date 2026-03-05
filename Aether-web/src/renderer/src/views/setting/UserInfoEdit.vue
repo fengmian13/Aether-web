@@ -6,12 +6,7 @@
       </el-form-item>
 
       <el-form-item label="昵称" prop="nickName">
-        <el-input
-          maxlength="150"
-          clearable
-          placeholder="请输入昵称"
-          v-model.trim="formData.nickName"
-        ></el-input>
+        <el-input maxlength="150" clearable placeholder="请输入昵称" v-model.trim="formData.nickName"></el-input>
       </el-form-item>
       <el-form-item label="性别" prop="sex">
         <el-radio-group v-model="formData.sex">
@@ -20,29 +15,16 @@
         </el-radio-group>
       </el-form-item>
       <el-form-item label="朋友权限" prop="joinType">
-        <el-switch
-          v-model="formData.joinType"
-          :active-value="1"
-          :inactive-value="0"
-          active-text="需要验证"
-          inactive-text="直接加入"
-        />
+        <el-switch v-model="formData.joinType" :active-value="1" :inactive-value="0" active-text="需要验证"
+          inactive-text="直接加入" />
         <div class="info">允许加我为好友时需要验证</div>
       </el-form-item>
       <el-form-item label="地区" prop="area">
         <AreaSelect v-model="formData.area"></AreaSelect>
       </el-form-item>
       <el-form-item label="个性签名" prop="personalSignature">
-        <el-input
-          clearable
-          placeholder="请输入个性签名"
-          v-model.trim="formData.personalSignature"
-          type="textarea"
-          rows="5"
-          maxlength="30"
-          :show-word-limit="true"
-          resize="none"
-        ></el-input>
+        <el-input clearable placeholder="请输入个性签名" v-model.trim="formData.personalSignature" type="textarea" rows="5"
+          maxlength="30" :show-word-limit="true" resize="none"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="saveUserInfo">保存个人信息</el-button>
@@ -61,8 +43,10 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 
-import { userUserInfoStore } from '@/store/modules/userUserInfoStore'
+import { userUserInfoStore } from '@/store/userUserInfoStore'
 const userInfoStore = userUserInfoStore()
+import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
+const avatarInfoStore = useAvatarInfoStore()
 
 const props = defineProps({
   data: {
@@ -114,13 +98,14 @@ const saveUserInfo = () => {
     Object.assign(params, formData.value)
     params.areaName = ''
     params.areaCode = ''
-
-    // TODO: 强制刷新头像
     if (params.area) {
       params.areaName = params.area.areaName.join(' ')
       params.areaCode = params.area.areaCode.join(',')
       delete params.area
     }
+    // NOTE: 强制刷新头像
+    avatarInfoStore.setFoceReload(userInfoStore.getUserInfo().userId, false)
+
     let result = await proxy.Request({
       url: proxy.Api.saveUserInfo,
       params
@@ -130,7 +115,8 @@ const saveUserInfo = () => {
     }
     proxy.Message.success('保存成功')
     userInfoStore.setInfo(result.data)
-    // TODO: 强制刷新头像
+    // NOTE: 强制刷新头像
+    avatarInfoStore.setFoceReload(userInfoStore.getUserInfo().userId, true)
     emit('editBack')
   })
 }

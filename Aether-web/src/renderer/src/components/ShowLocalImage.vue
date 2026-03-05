@@ -1,10 +1,13 @@
 <template>
   <div class="image-panel" @click="showImageHandler">
-    <el-image :src="serverUrl" fit="scale-down" style="width: 100%; height: 100%">
+    <el-image :src="serverUrl" fit="scale-down" :width="width">
       <template #error>
-        <img :src="noData" width="100%" height="100%" />
+        <div class="iconfont icon-image-error"></div>
       </template>
     </el-image>
+    <div class="play-panel" v-if="showPlay">
+      <span class="iconfont icon-video-play"></span>
+    </div>
   </div>
 </template>
 <script setup>
@@ -48,11 +51,6 @@ const serverUrl = computed(() => {
   if (!props.fileId) {
     return noData
   }
-  // let url = `${proxy.Api.prodDomain}/file/getResource?sourceName=${props.partType}&fileId=${props.fileId}`
-  // if (props.forceGet) {
-  //   url += `&_t=${new Date().getTime()}`
-  // }
-  // return url
   const serverPort = globalInfoStore.getInfo("localServerPort")
   return `http://127.0.0.1:${serverPort}/file?fileId=${props.fileId}&partType=${props.partType}&fileType=${props.fileType}&showCover=true&forceGet=${props.forceGet}&${new Date().getTime()}`
 })

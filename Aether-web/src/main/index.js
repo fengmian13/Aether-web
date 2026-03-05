@@ -4,13 +4,13 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import {onLoginOrRegister , onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect} from './ipc'
+import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover } from './ipc'
 import { createTable } from './db/ADB'
 
 
-const login_width=300;
-const login_height=370;
-const register_height=490;
+const login_width = 300;
+const login_height = 370;
+const register_height = 490;
 
 function createWindow() {
   // Create the browser window.
@@ -55,11 +55,11 @@ function createWindow() {
   }
 
   //托盘
-  const tray = new Tray(icon); 
-  const contextMenu =[
+  const tray = new Tray(icon);
+  const contextMenu = [
     {
       label: '退出Anther',
-      click: function() {
+      click: function () {
         app.exit();
       }
     }
@@ -69,35 +69,35 @@ function createWindow() {
   const menu = Menu.buildFromTemplate(contextMenu);
   tray.setToolTip('Anther');// 设置托盘图标的提示文本
   tray.setContextMenu(menu);
-  tray.on('click', function() {
+  tray.on('click', function () {
     mainWindow.show();
   });
 
 
   // 监听登录注册
-  onLoginOrRegister((isLogin)=>{
+  onLoginOrRegister((isLogin) => {
     mainWindow.setResizable(true);
-    if(isLogin){
+    if (isLogin) {
       mainWindow.setSize(login_width, login_height);
-    }else{
+    } else {
       mainWindow.setSize(login_width, register_height);
     }
     mainWindow.setResizable(false);
 
   });
   // 监听登录成功
-  onLoginSuccess((config)=>{
+  onLoginSuccess((config) => {
     mainWindow.setResizable(true);// 允许调整大小
     mainWindow.setSize(850, 800);
     mainWindow.center();// 居中显示
     mainWindow.setMaximizable(true);// 允许最大化
-    mainWindow.setMinimumSize(800,600);// 设置最小尺寸
+    mainWindow.setMinimumSize(800, 600);// 设置最小尺寸
     // TODO 管理后台的窗口操作，托盘操作
     // if(config.admin){
 
     // }
     contextMenu.unshift({
-      label: "用户："+ config.nickname, click: function() {
+      label: "用户：" + config.nickname, click: function () {
         // 显示用户信息
       }
     })
@@ -105,30 +105,30 @@ function createWindow() {
   });
 
   // 窗口操作
-  winTitleOp((e,{action,data})=>{
+  winTitleOp((e, { action, data }) => {
     const webContents = e.sender;
     // 获取当前操作的窗口
     const win = BrowserWindow.fromWebContents(webContents);
-    switch(action){
-      case "close":{
-        if(data.closeType == 0){
+    switch (action) {
+      case "close": {
+        if (data.closeType == 0) {
           // console.log("测试界面按钮响应")
           win.close();
-        }else{
+        } else {
           win.setSkipTaskbar(true);
           win.hide();// 隐藏
         }
         break;
       }
-      case "minimize":{
+      case "minimize": {
         win.minimize();
         break;
       }
-      case "maximize":{
+      case "maximize": {
         win.maximize();
         break;
       }
-      case "unmaximize":{
+      case "unmaximize": {
         win.unmaximize();
         break;
       }
@@ -140,7 +140,7 @@ function createWindow() {
   });
 
   onSetLocalStore();
-  
+
   onGetLocalStore();
 
   onLoadSessionData();
@@ -154,6 +154,8 @@ function createWindow() {
   onAddlocalMessage();
 
   OnSetSessionSelect();
+
+  onCreateCover();
 }
 
 // This method will be called when Electron has finished
