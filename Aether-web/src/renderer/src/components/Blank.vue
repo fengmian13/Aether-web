@@ -1,6 +1,8 @@
 <template>
-  <div class="top drag"></div>
-  <div class="iconfont icon-chat"></div>
+  <div class="blank-container">
+    <div class="top drag"></div>
+    <div class="iconfont icon-chat"></div>
+  </div>
 </template>
 
 <script setup>
@@ -10,6 +12,7 @@
 .top {
   height: 60px;
 }
+
 .iconfont {
   display: flex;
   align-items: center;

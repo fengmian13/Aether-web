@@ -7,6 +7,7 @@
         <div>
           <el-button type="primary" @click="checkUpdate">检查更新</el-button>
         </div>
+      </div>
     </el-form-item>
   </ContentPanel>
 </template>
@@ -20,12 +21,13 @@ const route = useRoute()
 const router = useRouter()
 
 // 检查更新
-const checkUpdate = () => {}
+const checkUpdate = () => { }
 </script>
 
 <style lang="scss" scoped>
 .about {
   padding: 20px;
+
   .title {
     font-size: 18px;
     font-weight: bold;

@@ -117,7 +117,7 @@ const sendMessageDo = async (messageObj = {
     return
   }
   messageObj.sessionId = props.currentChatSession.sessionId;
-  messageObj.sendUserId = userInfoStore.getInfo().sendUserId
+  messageObj.sendUserId = userInfoStore.getUserInfo().sendUserId
 
   let result = await proxy.Request({
     url: proxy.Api.sendMessage,

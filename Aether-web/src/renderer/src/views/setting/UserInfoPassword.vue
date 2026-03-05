@@ -3,22 +3,12 @@
     <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
       <!--input输入-->
       <el-form-item label="密码" prop="password">
-        <el-input
-          type="password"
-          clearable
-          placeholder="请输入新密码"
-          v-model.trim="formData.password"
-          show-password
-        ></el-input>
+        <el-input type="password" clearable placeholder="请输入新密码" v-model.trim="formData.password"
+          show-password></el-input>
       </el-form-item>
       <el-form-item label="确认密码" prop="rePassword">
-        <el-input
-          type="password"
-          clearable
-          placeholder="请输入确认密码"
-          v-model.trim="formData.rePassword"
-          show-password
-        ></el-input>
+        <el-input type="password" clearable placeholder="请输入确认密码" v-model.trim="formData.rePassword"
+          show-password></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="saveUserInfo">保存</el-button>
@@ -82,7 +72,7 @@ const saveUserInfo = () => {
         }
         proxy.Message.success('修改成功请重新登录', () => {
           // TODO: 重新登陆
-          window.ipcRanderer.send('reLogin')
+          window.ipcRenderer.send('reLogin')
         })
       }
     })
@@ -102,5 +92,12 @@ const close = () => {
 }
 </script>
 
-<style lang-"scss" scoped>
+<style lang="scss" scoped>
+.el-form {
+  margin-top: 15px;
+
+  .el-form-item__content {
+    justify-content: center;
+  }
+}
 </style>

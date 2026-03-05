@@ -54,7 +54,7 @@ import MessageSend from "./MessageSend.vue"
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import ChatSession from "./ChatSession.vue"
-import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
@@ -260,7 +260,7 @@ const delChatSession = (contactId) => {
   window.ipcRenderer.send('delChatSession', contactId)
 }
 const onContextMenu = (data, e) => {
-  Contextmenu.showContextMenu({
+  ContextMenu.showContextMenu({
     x: e.x,
     y: e.y,
     items: [{

@@ -1,5 +1,5 @@
 <template>
-    <div class="message-content-my" v-if="data.sendUserId == userInfoStore.getInfo().userId">
+    <div class="message-content-my" v-if="data.sendUserId == userInfoStore.getUserInfo().userId">
         <div :class="['content-panel', data.messageType == 5 ? 'content-panel-media' : '']">
             <div class="sending" v-if="data.status == 0">
                 <el-skeleton :animated="true">
@@ -23,7 +23,7 @@
                 </div>
             </template>
         </div>
-        <Avatar :width="35" :userId="userInfoStore.getInfo().userId" />
+        <Avatar :width="35" :userId="userInfoStore.getUserInfo().userId" />
     </div>
 
     <div class="message-content-other" v-else>

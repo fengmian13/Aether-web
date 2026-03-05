@@ -37,14 +37,14 @@
 <script setup>
 import AreaSelect from '@/components/AreaSelect.vue'
 import AvatarUpload from '../../components/AvatarUpload.vue'
-import { ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, onMounted, computed } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 
-import { userUserInfoStore } from '@/store/userUserInfoStore'
-const userInfoStore = userUserInfoStore()
+import { useUserInfoStore } from '@/stores/UserInfoStore'
+const userInfoStore = useUserInfoStore()
 import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
 const avatarInfoStore = useAvatarInfoStore()
 

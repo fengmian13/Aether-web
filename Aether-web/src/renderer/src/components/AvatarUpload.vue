@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, onMounted, watch, onUnmounted } from 'vue'
+import { ref, reactive, getCurrentInstance, onMounted, watch, onUnmounted, computed } from 'vue'
 import ShowLocalImage from './ShowLocalImage.vue'
 
 const { proxy } = getCurrentInstance()
