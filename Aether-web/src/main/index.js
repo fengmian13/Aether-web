@@ -33,7 +33,7 @@ function createWindow() {
 
 
   if (NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   }
 
   mainWindow.on('ready-to-show', () => {

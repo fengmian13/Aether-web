@@ -37,11 +37,11 @@ const mkdirs = (dir) => {
 }
 
 const getResourcesPath = () => {
-    let getResourcesPath = app.getAppPath();
+    let resPath = app.getAppPath();
     if (NODE_ENV !== 'development') {
-        resourcesPath = path.dirname(app.getPath("exe") + "/resources")
+        resPath = path.dirname(app.getPath("exe") + "/resources")
     }
-    return resourcesPath;
+    return resPath;
 }
 
 const getFFprobePath = () => {

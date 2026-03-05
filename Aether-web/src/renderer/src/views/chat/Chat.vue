@@ -30,7 +30,7 @@
       <div v-if="currentChatSession.contactType == 1" class="iconfont icon-more no-drag" @click="showGroupDetail"></div>
       <div class="chat-panel" v-show="Object.keys(currentChatSession).length > 0">
         <div class="message-panel" id="message-panel">
-          <div class="messahe-item" v-for="(data, index) in messageList" :id="'message' = deta.messageId">
+          <div class="message-item" v-for="(data, index) in messageList" :id="'message' + data.messageId">
             <template v-if="data.messageType == 1 || data.messageType == 2 || data.messageType == 5">
               <!-- 1:添加好友，2文本消息，5：媒体消息 -->
               <ChatMessage :data="data" :currentChatSession="currentChatSession"></ChatMessage>

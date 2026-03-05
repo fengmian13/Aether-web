@@ -5,7 +5,7 @@ import store from "./store"
 
 import { saveOrUpdateChatSessionBatch4Init, saveOrUpdate4Message, selectUserSessionByContactId } from "./db/ChatSessionUserModel"
 import { updateContactNoReadCount } from "./db/UserSettingModel"
-import { saveMessage, saveMessagebatch } from "./db/ChatMessageModel"
+import { saveMessage, saveMessageBatch } from "./db/ChatMessageModel"
 
 let ws = null;
 let maxReConnectTimes = null;
@@ -42,7 +42,7 @@ const createWs = () => {
                 //保存会话消息
                 await saveOrUpdateChatSessionBatch4Init(message.extendData.chatSessionList);
                 //保存消息
-                await saveMessagebatch(message.extendData.chatMessageList);
+                await saveMessageBatch(message.extendData.chatMessageList);
                 //更新联系人申请数
                 await updateContactNoReadCount({ userId: store.getUserId(), noReadCount: message.extendData.applyCount });
                 //发送消息
