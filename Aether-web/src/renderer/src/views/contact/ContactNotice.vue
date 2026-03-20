@@ -91,18 +91,12 @@
         </div>
 
         <div class="modal-footer">
-          <button
-            class="btn btn-secondary"
-            @click="dealWithApply(currentApply.applyUserId, 2)"
-            :disabled="actionLoading"
-          >
+          <button class="btn btn-secondary"
+            @click="dealWithApply(currentApply.applyUserId, currentApply.receiveUserId, 2)" :disabled="actionLoading">
             拒绝
           </button>
-          <button
-            class="btn btn-primary"
-            @click="dealWithApply(currentApply.applyUserId, 1)"
-            :disabled="actionLoading"
-          >
+          <button class="btn btn-primary"
+            @click="dealWithApply(currentApply.applyUserId, currentApply.receiveUserId, 1)" :disabled="actionLoading">
             同意
           </button>
         </div>
@@ -210,7 +204,7 @@ const closeModal = () => {
 }
 
 // 处理申请（同意/拒绝）
-const dealWithApply = async (applyUserId, status) => {
+const dealWithApply = async (applyUserId, receiveUserId, status) => {
   if (actionLoading.value) return
 
   actionLoading.value = true
@@ -218,8 +212,9 @@ const dealWithApply = async (applyUserId, status) => {
     let result = await proxy.Request({
       url: proxy.Api.dealWithApply,
       params: {
-        applyUserId: applyUserId,
-        status: status
+        applyUserId: applyUserId,//申请人id
+        receiveUserId: receiveUserId,
+        status: status//处理状态
       }
     })
 
@@ -403,6 +398,7 @@ onMounted(() => {
   background-color: #1890ff;
   color: white;
 }
+
 .btn-handle:hover {
   background-color: #40a9ff;
 }
@@ -456,6 +452,7 @@ onMounted(() => {
   font-size: 20px;
   color: #999;
 }
+
 .close-icon:hover {
   color: #666;
 }
@@ -491,6 +488,7 @@ onMounted(() => {
   font-weight: 500;
   color: #333;
 }
+
 .modal-user-details .modal-id {
   font-size: 12px;
   color: #999;
@@ -528,6 +526,7 @@ onMounted(() => {
   color: #666;
   border: 1px solid #d9d9d9;
 }
+
 .btn-secondary:hover {
   background: #fff;
   color: #f5222d;
@@ -538,6 +537,7 @@ onMounted(() => {
   background: #1890ff;
   color: #fff;
 }
+
 .btn-primary:hover {
   background: #40a9ff;
 }
@@ -552,15 +552,18 @@ onMounted(() => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes slideUp {
   from {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;

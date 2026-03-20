@@ -111,7 +111,13 @@ watch(
 )
 
 const sendMessage = () => {
-  // 消息发送逻辑
+  router.push({
+    path: '/chat',
+    query: {
+      chatId: userInfo.value.userId,
+      timestamp: new Date().getTime()
+    }
+  })
 }
 
 const callVideo = () => {
@@ -127,15 +133,18 @@ const callVoice = () => {
 .user-info {
   position: relative;
   padding: 20px;
+
   .more-op {
     position: absolute;
     right: 20px;
     top: 20px;
     cursor: pointer;
     z-index: 10;
+
     .iconfont {
       color: #9e9e9e;
       font-size: 20px;
+
       &:hover {
         color: #555;
       }
@@ -147,10 +156,12 @@ const callVoice = () => {
   display: flex;
   border-bottom: 1px solid #eaeaea;
   padding: 20px 0;
+
   .part-title {
     width: 60px;
     color: #9e9e9e;
   }
+
   .part-content {
     flex: 1;
     margin-left: 15px;
@@ -171,13 +182,16 @@ const callVoice = () => {
   margin-top: 50px;
   cursor: pointer;
   transition: all 0.3s;
+
   .iconfont {
     font-size: 20px;
     margin-right: 5px;
   }
+
   span {
     font-size: 14px;
   }
+
   &:hover {
     background: #66b1ff;
   }

@@ -65,6 +65,57 @@ const search = () => { }
 
 const chatSessionList = ref([])
 
+import { watch } from 'vue'
+
+const setChatSessionByChatId = async (chatId) => {
+  if (!chatId) {
+    return
+  }
+  let session = chatSessionList.value.find((item) => {
+    return item.contactId == chatId;
+  });
+  if (session) {
+    chatSessionClickHandler(session);
+  } else {
+    // If not found, fetch contact details and add it temporarily to the list.
+    let result = await proxy.Request({
+      url: proxy.Api.getContactInfo,
+      params: {
+        contactId: chatId
+      },
+      showLoading: false
+    });
+    if (!result) {
+      return;
+    }
+
+    // Construct dummy session based on contact info
+    let newSession = {
+      contactId: result.data.contactId,
+      contactName: result.data.contactName || result.data.nickName,
+      contactType: result.data.contactType,
+      sessionId: result.data.sessionId || 'TEMP',
+      memberCount: result.data.memberCount || 0,
+      lastMessage: '',
+      lastReceiveTime: new Date().getTime(),
+      topType: 0,
+      status: 1
+    };
+
+    // Unshift puts it at the top
+    chatSessionList.value.unshift(newSession);
+    chatSessionClickHandler(newSession);
+  }
+}
+
+watch(
+  () => route.query.chatId,
+  (newVal) => {
+    setChatSessionByChatId(newVal);
+  },
+  { immediate: true, deep: true }
+)
+
 const loadChatSession = () => {
   window.ipcRenderer.send("loadSessionData");
 }
@@ -170,6 +221,7 @@ const OnLoadSessionData = () => {
     // NOTE：会话排序
     sortChatSessionList(dataList);
     chatSessionList.value = dataList;
+    setChatSessionByChatId(route.query.chatId);
   })
 }
 

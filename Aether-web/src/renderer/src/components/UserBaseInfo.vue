@@ -1,18 +1,9 @@
 <template>
   <div class="user-panel" v-if="userInfo">
-    <AvatarBase
-      v-if="userInfo.userId || userInfo.contactId"
-      :userId="userInfo?.userId || userInfo?.contactId || ''"
-      :width="60"
-      :borderRadius="5"
-      :showDetail="true"
-    >
+    <AvatarBase v-if="userInfo.userId || userInfo.contactId" :userId="userInfo?.userId || userInfo?.contactId || ''"
+      :width="60" :borderRadius="5" :showDetail="true">
     </AvatarBase>
-    <div
-      v-else
-      class="avatar-placeholder"
-      :style="{ width: '60px', height: '60px', 'border-radius': '5px' }"
-    >
+    <div v-else class="avatar-placeholder" :style="{ width: '60px', height: '60px', 'border-radius': '5px' }">
       <!-- 占位元素 -->
     </div>
     <div class="user-info">
@@ -57,26 +48,32 @@ const props = defineProps({
 .user-panel {
   display: flex;
   padding-bottom: 20px;
+
   .user-info {
     flex: 1;
     margin-left: 10px;
   }
+
   .nick-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #000000;
     font-size: 16px;
+
     .iconfont {
       font-size: 13px;
     }
+
     .icon-man {
       color: #2cb6fe;
     }
+
     .icon-woman {
       color: #fb7373;
     }
   }
+
   .info {
     font-size: 12px;
     color: #9e9e9e;

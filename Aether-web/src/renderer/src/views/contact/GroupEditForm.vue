@@ -1,19 +1,10 @@
 <template>
   <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
     <el-form-item label="群组名称" prop="groupName">
-      <el-input
-        maxlength="150"
-        clearable
-        placeholder="请输入群组名称"
-        v-model.trim="formData.groupName"
-      ></el-input>
+      <el-input maxlength="150" clearable placeholder="请输入群组名称" v-model.trim="formData.groupName"></el-input>
     </el-form-item>
     <el-form-item label="封面" prop="avatarFile">
-      <AvatarUpload
-        v-model="formData.avatarFile"
-        ref="avatarUploadRef"
-        @coverFile="saveCover"
-      ></AvatarUpload>
+      <AvatarUpload v-model="formData.avatarFile" ref="avatarUploadRef" @coverFile="saveCover"></AvatarUpload>
     </el-form-item>
     <el-form-item label="加入权限" prop="joinType">
       <el-radio-group v-model="formData.joinType">
@@ -22,16 +13,8 @@
       </el-radio-group>
     </el-form-item>
     <el-form-item label="公告" prop="groupIntroducte">
-      <el-input
-        clearable
-        placeholder="请输入群组公告"
-        v-model.trim="formData.groupIntroducte"
-        type="textarea"
-        :rows="5"
-        maxlength="300"
-        :show-word-limit="true"
-        resize="none"
-      ></el-input>
+      <el-input clearable placeholder="请输入群组公告" v-model.trim="formData.groupIntroducte" type="textarea" :rows="5"
+        maxlength="300" :show-word-limit="true" resize="none"></el-input>
     </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="submit">{{ formData.groupId ? '修改' : '创建' }}</el-button>
@@ -112,5 +95,4 @@ defineExpose({
 })
 </script>
 
-<style>
-</style>
+<style></style>

@@ -1,38 +1,17 @@
 <template>
   <div>
-    <AvatarBase
-      :userId="userId"
-      :width="width"
-      :borderRadius="borderRadius"
-      :showDetail="false"
-      v-if="userId == 'Urobot'"
-    ></AvatarBase>
-    <el-popover
-      v-else
-      :width="280"
-      placement="right-start"
-      :show-arrow="false"
-      trigger="click"
-      transition="none"
-      :hide-after="0"
-      @show="getContactInfo"
-      ref="popoverRef"
-    >
+    <AvatarBase :userId="userId" :width="width" :borderRadius="borderRadius" :showDetail="false"
+      v-if="userId == 'Urobot'"></AvatarBase>
+    <el-popover v-else :width="280" placement="right-start" :show-arrow="false" trigger="click" transition="none"
+      :hide-after="0" @show="getContactInfo" ref="popoverRef">
       <template #reference>
-        <AvatarBase
-          :userId="userId"
-          :width="width"
-          :borderRadius="borderRadius"
-          :showDetail="false"
-        ></AvatarBase>
+        <AvatarBase :userId="userId" :width="width" :borderRadius="borderRadius" :showDetail="false"></AvatarBase>
       </template>
       <template #default>
         <div class="user-detail-container">
           <UserBaseInfo :userInfo="userInfo"></UserBaseInfo>
           <div class="op-btn" v-if="userId !== userInfoStore.getUserInfo().userId">
-            <el-button v-if="userInfo.contactStatus == 1" type="primary" @click="sendMessage"
-              >发送消息</el-button
-            >
+            <el-button v-if="userInfo.contactStatus == 1" type="primary" @click="sendMessage">发送消息</el-button>
             <el-button v-else type="primary" @click="addContact">添加好友</el-button>
           </div>
         </div>
@@ -89,9 +68,9 @@ const getContactInfo = async () => {
 }
 
 //TODO 发送消息
-const sendMessage = () => {}
+const sendMessage = () => { }
 //TODO 添加好友
-const addContact = () => {}
+const addContact = () => { }
 </script>
 
 <style lang="scss" scoped>
