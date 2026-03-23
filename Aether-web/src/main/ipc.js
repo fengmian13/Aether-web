@@ -7,7 +7,7 @@ import store from './store'
 import { log } from 'console'
 import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
-import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll } from './db/ChatSessionUserModel'
+import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
 import { saveFile2Local, createCover } from './file'
 
@@ -66,7 +66,13 @@ const onLoadSessionData = () => {
   ipcMain.on("loadSessionData", async (e) => {
     // const dataList = []
     const result = await selectUserSessionList();
-    e.sender.send("loadSessionDataCallback", dataList)
+    e.sender.send("loadSessionDataCallback", result)
+  })
+}
+
+const onAddChatSession = () => {
+  ipcMain.on("addChatSession", (e, sessionInfo) => {
+    addChatSession(sessionInfo);
   })
 }
 
@@ -97,7 +103,6 @@ const OnSetSessionSelect = () => {
     } else {
       store.deleteUserData("currentSessionId")
     }
-    e.sender.send("loadChatMessageCallback", result)
   })
 };
 
@@ -139,5 +144,6 @@ export {
   onLoadChatMessage,
   onAddlocalMessage,
   OnSetSessionSelect,
-  onCreateCover
+  onCreateCover,
+  onAddChatSession
 }

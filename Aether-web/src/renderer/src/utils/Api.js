@@ -21,6 +21,8 @@ const api = {
     getUserInfo: "/userInfo/getUserInfo",//获取用户信息
     dissolutionGroup: "/group/dissolutionGroup",//解散群组
     leaveGroup: "/group/leaveGroup",//退出群组
+    getContactInfo: "/userContact/getContactInfo",//获取联系人信息
+    sendMessage: "/chat/sendMessage",//发送消息
 }
 
 export default api;

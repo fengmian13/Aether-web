@@ -11,14 +11,14 @@ import {
 import store from "../store"
 
 const selectUserSessionByContactId = (contactId) => {
-    let sql = "select * from chat_sessionn_user where user_id = ? and contact_id = ?";
-    return queryOne(sql, [store.getUserId, contactId])
+    let sql = "select * from chat_session_user where user_id = ? and contact_id = ?";
+    return queryOne(sql, [store.getUserId(), contactId])
 }
 
 
 const addChatSession = (sessionInfo) => {
     sessionInfo.userId = store.getUserId();
-    insertOrIgnore("chat_sessionn_user", sessionInfo);
+    insertOrIgnore("chat_session_user", sessionInfo);
 }
 
 const updateChatSession = (sessionInfo) => {
@@ -28,7 +28,7 @@ const updateChatSession = (sessionInfo) => {
     }
     const updateInfo = Object.assign({}, sessionInfo);
     updateInfo.userId = null;
-    updateInfo.contactId == null;
+    updateInfo.contactId = null;
     return update("chat_session_user", updateInfo, paramData)
 }
 
@@ -127,6 +127,7 @@ const saveOrUpdate4Message = (currentSessionId, sessionInfo) => {
 }
 
 export {
+    addChatSession,
     saveOrUpdateChatSessionBatch4Init,
     updateNoReadCount,
     selectUserSessionList,

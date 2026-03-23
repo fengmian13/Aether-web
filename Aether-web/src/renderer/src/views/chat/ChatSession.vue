@@ -4,7 +4,7 @@
         <AvatarBase :userId="data.contactId"></AvatarBase>
         <div class="user-info">
             <div class="user-name-panel">
-                <div class="user-name">{{ data.contactname }}</div>
+                <div class="user-name">{{ data.contactName }}</div>
                 <div class="message-time">{{ proxy.Utils.formatDate(data.lastReceiveTime) }}</div>
             </div>
             <div class="last-message" v-html="data.lastMessage"></div>

@@ -142,10 +142,10 @@ const insert = (sqlPrefix, tableName, data) =>{
 }
 
 const insertOrReplace = (tableName, data)=>{
-  return insert("insert or replace", tableName, data);
+  return insert("insert or replace into", tableName, data);
 }
 const insertOrIgnore = (tableName, data)=>{
-  return insert("insert or ignore", tableName, data);
+  return insert("insert or ignore into", tableName, data);
 }
 
 // 更新
@@ -168,7 +168,7 @@ const update = (tableName, data, paramData) =>{
     }
   }
 
-  const sql = `update ${tableName} set ${dbColumns.join(",")} ${whereColumns.length > 0 ? 'where' : ''}${whereColumns.join(" and ")}`;
+  const sql = `update ${tableName} set ${dbColumns.join(",")} ${whereColumns.length > 0 ? 'where ' : ''}${whereColumns.join(" and ")}`;
   return run(sql, params);
 }
 

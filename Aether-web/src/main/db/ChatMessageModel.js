@@ -57,7 +57,7 @@ const selectMessageList = (query) => {
     return new Promise(async (resolve, reject) => {
         const { sessionId, pageNo, maxMessageId } = query;
         let sql = "select count(1) from chat_message where session_id= ? and user_id = ?";
-        const toatalCount = await queryCount(sql, [sessionId, store.getUserId()]);
+        const totalCount = await queryCount(sql, [sessionId, store.getUserId()]);
         const { pageTotal, offset, limit } = getPageOffset(pageNo, totalCount);
 
         const params = [sessionId, store.getUserId()];

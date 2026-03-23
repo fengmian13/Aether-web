@@ -91,9 +91,9 @@ const setChatSessionByChatId = async (chatId) => {
 
     // Construct dummy session based on contact info
     let newSession = {
-      contactId: result.data.contactId,
+      contactId: result.data.contactId || chatId,
       contactName: result.data.contactName || result.data.nickName,
-      contactType: result.data.contactType,
+      contactType: result.data.contactType || 0,
       sessionId: result.data.sessionId || 'TEMP',
       memberCount: result.data.memberCount || 0,
       lastMessage: '',
@@ -101,6 +101,8 @@ const setChatSessionByChatId = async (chatId) => {
       topType: 0,
       status: 1
     };
+
+    window.ipcRenderer.send('addChatSession', newSession);
 
     // Unshift puts it at the top
     chatSessionList.value.unshift(newSession);
@@ -113,7 +115,7 @@ watch(
   (newVal) => {
     setChatSessionByChatId(newVal);
   },
-  { immediate: true, deep: true }
+  { immediate: false, deep: true }
 )
 
 const loadChatSession = () => {
@@ -319,7 +321,8 @@ const onContextMenu = (data, e) => {
       label: data.topType == 0 ? "置顶" : "取消置顶",
       onClick: () => {
         setTop(data)
-      },
+      }
+    }, {
       label: '删除聊天',
       onClick: () => {
         proxy.Confirm({
@@ -343,7 +346,7 @@ const onContextMenu = (data, e) => {
 }
 
 .top-search {
-  padding: Opx 10px 9px 10px;
+  padding: 0px 10px 9px 10px;
   background: #f7f7f7;
   display: flex;
   align-items: center;
@@ -405,9 +408,9 @@ const onContextMenu = (data, e) => {
   border-top: 1px solid#ddd;
   background: #f5f5f5;
 
-  message-panel {
+  .message-panel {
     padding: 10px 30px 0px 30px;
-    height: calc(100vh - 200px);
+    height: calc(100vh - 200px - 62px);
     overflow-y: auto;
 
     .message-item {

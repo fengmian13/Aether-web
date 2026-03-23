@@ -106,7 +106,7 @@ const sendMessageDo = async (messageObj = {
   fileSize,
   fileName,
   filePath,
-  fileType
+  Suffix
 }, cleanMsgContent) => {
   //TODO 判断文件大小
   if (messageObj.fileSize == 0) {
@@ -117,7 +117,9 @@ const sendMessageDo = async (messageObj = {
     return
   }
   messageObj.sessionId = props.currentChatSession.sessionId;
-  messageObj.sendUserId = userInfoStore.getUserInfo().sendUserId
+  messageObj.sendUserId = userInfoStore.getUserInfo().userId;
+  messageObj.contactId = props.currentChatSession.contactId;
+  messageObj.lastMessage = messageObj.messageContent;
 
   let result = await proxy.Request({
     url: proxy.Api.sendMessage,
@@ -128,7 +130,7 @@ const sendMessageDo = async (messageObj = {
       messageType: messageObj.messageType,
       fileSize: messageObj.fileSize,
       fileName: messageObj.fileName,
-      fileType: messageObj.fileType
+      Suffix: messageObj.Suffix
     },
     showError: false,
     errorCallBack: (responseData) => {
@@ -147,7 +149,24 @@ const sendMessageDo = async (messageObj = {
   if (cleanMsgContent) {
     msgContent.value = ''
   }
+
+  // const origContent = messageObj.messageContent;
+  // const origType = messageObj.messageType;
+  // 缺失了数据库存盘最关键的 4 个核心字段：后端没有传过来
+  // message_id（这条消息的唯一主键 ID）
+  // message_content（消息说的什么）
+  // message_type（它是文本还是图片）
+  // contact_type（群聊还是单聊）
+
   Object.assign(messageObj, result.data);
+
+  // if (messageObj.messageContent == null) messageObj.messageContent = origContent;
+  // if (messageObj.messageType == null) messageObj.messageType = origType;
+  // messageObj.contactType = props.currentChatSession.contactType;
+  // if (messageObj.messageId == null) {
+  //   messageObj.messageId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 100000);
+  // }
+
   emit("sendMessage4Local", messageObj);
   //保存消息到本地
   window.ipcRenderer.send('addlocalMessage', messageObj)
@@ -163,14 +182,14 @@ const getFileTypeByName = (fileName) => {
   return getFileType(fileSuffix);
 }
 const uploadFileDo = (file) => {
-  const fileType = getFileTypeByName(file.name);
+  const Suffix = getFileTypeByName(file.name);
   sendMessageDo({
-    messageContent: '[' + getFileType(fileType) + ']',
+    messageContent: '[' + getFileType(Suffix) + ']',
     messageType: 5,
     fileSize: file.size,
     fileName: file.name,
-    filePath: file.pyth,
-    fileType: fileType
+    filePath: file.path,
+    Suffix: Suffix
   }, false)
 }
 
