@@ -74,7 +74,7 @@ import { useUserInfoStore } from '@/stores/UserInfoStore'
 import ChatMessageImage from "./ChatMessageImage.vue";
 import ChatMessageVideo from "./ChatMessageVideo.vue";
 import ChatMessageFile from "./ChatMessageFile.vue";
-const UserInfoStore = useUserInfoStore
+const userInfoStore = useUserInfoStore()
 
 const props = defineProps({
     data: {

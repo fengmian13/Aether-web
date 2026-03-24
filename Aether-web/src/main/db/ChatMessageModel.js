@@ -30,7 +30,7 @@ const saveMessageBatch = (chatMessageList) => {
         });
         //更新未读数
         for (let item in chatSessionCountMap) {
-            await updateNoReadCount({ contactId: item, noReadCount: chatSessionCountMap[item] });
+            await updateNoReadCount(item, chatSessionCountMap[item]);
         }
         // 批量插入数据
         chatMessageList.forEach(async item => {
@@ -42,6 +42,9 @@ const saveMessageBatch = (chatMessageList) => {
 
 const getPageOffset = (pageNo = 1, totalCount) => {
     const pageSize = 20;
+    if (totalCount === 0) {
+        return { pageTotal: 1, offset: 0, limit: pageSize };
+    }
     const pageTotal = totalCount % pageSize === 0 ? totalCount / pageSize : Number.parseInt(totalCount / pageSize) + 1;
 
     pageNo = pageNo <= 1 ? 1 : pageNo;
@@ -63,7 +66,7 @@ const selectMessageList = (query) => {
         const params = [sessionId, store.getUserId()];
         sql = "select * from chat_message where session_id = ? and user_id = ?";
         if (maxMessageId) {
-            sql = sql + "and message_id <= ?";
+            sql = sql + " and message_id <= ?";
             params.push(maxMessageId);
         }
         params.push(offset);

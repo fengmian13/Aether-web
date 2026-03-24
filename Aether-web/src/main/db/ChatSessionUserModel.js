@@ -97,6 +97,11 @@ const updateSessionInfo4Message = async (currentSessionId, { sessionId, contactN
         sql = sql + ",member_count =?"
         params.push(memberCount);
     }
+    // 如果拿到了真实的 sessionId，同步更新 chat_session_user 里的 session_id
+    if (sessionId && sessionId !== 'TEMP') {
+        sql = sql + ",session_id = ?"
+        params.push(sessionId);
+    }
     //未选中当前session增加未读消息数
     if (sessionId !== currentSessionId) {
         sql = sql + ",no_read_count = no_read_count + 1";

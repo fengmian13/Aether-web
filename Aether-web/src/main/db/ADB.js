@@ -7,7 +7,7 @@ const userDir = os.homedir();
 console.log(userDir);
 const dbFolder = userDir + (NODE_ENV === 'development' ? '/.aether-dev/' : '/.aether/');
 console.log(dbFolder);
-if(!fs.existsSync(dbFolder)) {
+if (!fs.existsSync(dbFolder)) {
   fs.mkdirSync(dbFolder);
 }
 
@@ -15,67 +15,68 @@ const db = new sqlite3.Database(dbFolder + 'aether.db');
 
 const globaColumnsMap = {};
 
-const createTable = ()=>{
-    return new Promise(async(resolve, reject)=>{
-      for(const item of add_tables){
-        await db.run(item);
+const createTable = () => {
+  return new Promise(async (resolve, reject) => {
+    for (const item of add_tables) {
+      await db.run(item);
+    }
+    for (const item of add_index) {
+      await db.run(item);
+    }
+    for (const item of alter_tables) {
+      const fieldList = await queryAll(`PRAGMA table_info(${item.tableName})`, [])
+      const field = fieldList.some(row => row.name === item.field);
+      if (!field) {
+        await db.run(item.sql);
       }
-      for(const item of add_index){
-        await db.run(item);
-      }
-      for(const item of alter_tables){
-        const fieldList = await queryAll(`PRAGMA table_info(${item.tableName})`, [])
-        const field = fieldList.some(row => row.name === item.field);
-        if(!field){
-          await db.run(item.sql);
-        }
-      }
-      resolve(); 
-    })
+    }
+    resolve();
+  })
 }
 
-const initTableColumnsMap = async() =>{
- let sql = `select name from sqlite_master where type= 'table' AND name!='sqlite_sequence'`;
- let tables = await queryAll(sql, []);
- for(let i=0;i<tables.length;i++){
-  sql = `PRAGMA table_info(${tables[i].name})`;
-  let columns = await queryAll(sql, []);
-  const columnMapItem = {};
-  for(let j=0;j<columns.length;j++){
-    columnMapItem[toCamelCase(columns[j].name)] = columns[j].name;
+const initTableColumnsMap = async () => {
+  let sql = `select name from sqlite_master where type= 'table' AND name!='sqlite_sequence'`;
+  let tables = await queryAll(sql, []);
+  for (let i = 0; i < tables.length; i++) {
+    sql = `PRAGMA table_info(${tables[i].name})`;
+    let columns = await queryAll(sql, []);
+    const columnMapItem = {};
+    for (let j = 0; j < columns.length; j++) {
+      columnMapItem[toCamelCase(columns[j].name)] = columns[j].name;
+    }
+    globaColumnsMap[tables[i].name] = columnMapItem;
   }
-  globaColumnsMap[tables[i].name] = columnMapItem;
- }
- console.log("111111111111111")
- console.log(globaColumnsMap);
+  console.log("111111111111111")
+  console.log(globaColumnsMap);
 }
 
-const convertDbObj2BizObj = (data)=>{
-  if(!data){
+const convertDbObj2BizObj = (data) => {
+  if (!data) {
     return null;
   }
   const bizData = {};
-  for(let item in data){
+  for (let item in data) {
     bizData[toCamelCase(item)] = data[item];
   }
   return bizData
 }
 
-const toCamelCase=(str)=>{
-  return str.replace(/_([a-z])/g, function(match, p1){
+const toCamelCase = (str) => {
+  return str.replace(/_([a-z])/g, function (match, p1) {
     return String.fromCharCode(p1.charCodeAt(0) - 32);
   })
 }
 
 
-const queryAll =(sql, params)=>{
-  return new Promise((resolve, reject)=>{
+const queryAll = (sql, params) => {
+  return new Promise((resolve, reject) => {
     const stmt = db.prepare(sql);
-    stmt.all(params, function(err, row){
-      if(err){
+    console.log(`执行的sql:${sql},params:${JSON.stringify(params)}`);
+    stmt.all(params, function (err, row) {
+      if (err) {
         resolve([]);
       }
-      row.forEach((item,index)=>{
+      row.forEach((item, index) => {
         row[index] = convertDbObj2BizObj(item);
       })
       resolve(row);
@@ -83,11 +84,11 @@ const queryAll =(sql, params)=>{
   })
 }
 
-const queryCount = (sql, params) =>{
-  return new Promise((resolve, reject)=>{
+const queryCount = (sql, params) => {
+  return new Promise((resolve, reject) => {
     const stmt = db.prepare(sql);
-    stmt.get(params, function(err, row){
-      if(err){
+    stmt.get(params, function (err, row) {
+      if (err) {
         resolve(0);
       }
       resolve(Array.from(Object.values(row))[0]);
@@ -96,25 +97,25 @@ const queryCount = (sql, params) =>{
   })
 }
 
-const queryOne = (sql, params) =>{
-  return new Promise((resolve, reject) =>{
+const queryOne = (sql, params) => {
+  return new Promise((resolve, reject) => {
     const stmt = db.prepare(sql);
-    stmt.get(params, function(err, row){
-      if(err){
+    stmt.get(params, function (err, row) {
+      if (err) {
         resolve({});
       }
       resolve(convertDbObj2BizObj(row));
-      console.log(`执行的sql:${sql},params:$params,row:${JSON.stringify(row)}`);
+      console.log(`执行的sql:${sql},params:${params},row:${JSON.stringify(row)}`);
     })
     stmt.finalize();
   })
 }
 
-const run = (sql, params) =>{
-  return new Promise((resolve, reject) =>{
+const run = (sql, params) => {
+  return new Promise((resolve, reject) => {
     const stmt = db.prepare(sql);
-    stmt.run(params, function(err){
-      if(err){
+    stmt.run(params, function (err) {
+      if (err) {
         console.error(`执行的sql:${sql},params:${params},执行失败：${err}`)
         resolve("操作数据库失败");
       }
@@ -126,12 +127,12 @@ const run = (sql, params) =>{
 }
 
 // 插入
-const insert = (sqlPrefix, tableName, data) =>{
+const insert = (sqlPrefix, tableName, data) => {
   const columnsMap = globaColumnsMap[tableName];
   const dbColumns = [];
   const params = [];
-  for(let item in data){
-    if(data[item] != undefined&&columnsMap[item]!=undefined){
+  for (let item in data) {
+    if (data[item] != undefined && columnsMap[item] != undefined) {
       dbColumns.push(columnsMap[item]);
       params.push(data[item]);
     }
@@ -141,28 +142,28 @@ const insert = (sqlPrefix, tableName, data) =>{
   return run(sql, params);
 }
 
-const insertOrReplace = (tableName, data)=>{
+const insertOrReplace = (tableName, data) => {
   return insert("insert or replace into", tableName, data);
 }
-const insertOrIgnore = (tableName, data)=>{
+const insertOrIgnore = (tableName, data) => {
   return insert("insert or ignore into", tableName, data);
 }
 
 // 更新
-const update = (tableName, data, paramData) =>{
+const update = (tableName, data, paramData) => {
   const columnsMap = globaColumnsMap[tableName];
   const dbColumns = [];
   const params = [];
   const whereColumns = [];
-  for(let item in data){
-    if(data[item] != undefined&&columnsMap[item]!=undefined){
+  for (let item in data) {
+    if (data[item] != undefined && columnsMap[item] != undefined) {
       dbColumns.push(`${columnsMap[item]}=?`);
       params.push(data[item]);
     }
   }
 
-  for(let item in paramData){
-    if(paramData[item]){
+  for (let item in paramData) {
+    if (paramData[item]) {
       params.push(paramData[item]);
       whereColumns.push(`${columnsMap[item]} = ?`);
     }
@@ -172,8 +173,8 @@ const update = (tableName, data, paramData) =>{
   return run(sql, params);
 }
 
-const init = () =>{
-  db.serialize(async() =>{
+const init = () => {
+  db.serialize(async () => {
     await createTable();
     await initTableColumnsMap();
   })

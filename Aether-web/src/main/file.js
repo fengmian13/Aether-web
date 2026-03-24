@@ -27,12 +27,9 @@ const getDomain = () => {
 }
 
 const mkdirs = (dir) => {
+    if (!dir) return;
     if (!fs.existsSync(dir)) {
-        const parentDir = path.dirname(dir);
-        if (parentDir !== dir) {
-            mkdirs(parentDir);
-        }
-        fs.mkdirSync(dir);
+        fs.mkdirSync(dir, { recursive: true });
     }
 }
 
@@ -130,7 +127,7 @@ const getLocalFilePath = (partType, showCover, fileId) => {
             let messageInfo = await selectByMessageId(fileId);
             const month = moment(Number.parseInt(messageInfo.sendTime)).format("YYYYMM");
             localFolder = localFolder + "/" + month;
-            if (fs.existsSync(localFolder)) {
+            if (!fs.existsSync(localFolder)) {
                 mkdirs(localFolder);
             }
             let fileSuffix = messageInfo.fileName;
@@ -193,10 +190,11 @@ const downloadFile = (fileId, showCover, savePath, partType) => {
     showCover = showCover + "";
     let url = `${getDomain()}/api/chat/downloadFile`
     const token = store.getUserData('token');
+    console.log(token)
     return new Promise(async (resolve, reject) => {
         const config = {
             responseType: "stream",
-            header: { 'Content-Type': 'multipart/form-data', 'token': token }
+            headers: { 'Content-Type': 'multipart/form-data', 'token': token }
         }
         let response = await axios.post(url, {
             fileId,
@@ -204,7 +202,7 @@ const downloadFile = (fileId, showCover, savePath, partType) => {
         }, config);
         const folder = savePath.substring(0, savePath.lastIndexOf("/"));
         mkdirs(folder);
-        const stream = fs.createReadStream(savePath);
+        const stream = fs.createWriteStream(savePath);
         if (response.headers['content-type'] == "application/json") {
             let resourcesPath = getResourcesPath();
             if (partType == "avatar") {

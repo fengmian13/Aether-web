@@ -150,22 +150,20 @@ const sendMessageDo = async (messageObj = {
     msgContent.value = ''
   }
 
-  // const origContent = messageObj.messageContent;
-  // const origType = messageObj.messageType;
-  // 缺失了数据库存盘最关键的 4 个核心字段：后端没有传过来
-  // message_id（这条消息的唯一主键 ID）
-  // message_content（消息说的什么）
-  // message_type（它是文本还是图片）
-  // contact_type（群聊还是单聊）
+  // 保存本地原始字段，服务端可能不返回这些
+  const origContent = messageObj.messageContent;
+  const origType = messageObj.messageType;
 
   Object.assign(messageObj, result.data);
 
-  // if (messageObj.messageContent == null) messageObj.messageContent = origContent;
-  // if (messageObj.messageType == null) messageObj.messageType = origType;
-  // messageObj.contactType = props.currentChatSession.contactType;
-  // if (messageObj.messageId == null) {
-  //   messageObj.messageId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 100000);
-  // }
+  // 服务端若未返回这些必填字段，使用本地值兜底
+  if (!messageObj.messageContent) messageObj.messageContent = origContent;
+  if (!messageObj.messageType) messageObj.messageType = origType;
+  messageObj.contactType = props.currentChatSession.contactType;
+  // 若服务端未返回 messageId，生成一个临时 ID 保证主键不为空
+  if (!messageObj.messageId) {
+    messageObj.messageId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+  }
 
   emit("sendMessage4Local", messageObj);
   //保存消息到本地

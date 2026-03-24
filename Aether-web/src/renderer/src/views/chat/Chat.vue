@@ -125,11 +125,11 @@ const loadChatSession = () => {
 //会话排序
 const sortChatSessionList = (dataList) => {
   dataList.sort((a, b) => {
-    const topTpeResult = b['topType'] - a['topType'];
+    const topTypeResult = b['topType'] - a['topType'];
     if (topTypeResult == 0) {
       return b['lastReceiveTime'] - a['lastReceiveTime']
     }
-    return topTpeResult
+    return topTypeResult
   })
 }
 
@@ -145,7 +145,7 @@ const currentChatSession = ref({})
 const messageCountInfo = {
   totalPage: 0,
   pageNo: 0,
-  maxMessageageId: null,
+  maxMessageId: null,
   noData: false
 };
 //点击会话
@@ -155,14 +155,14 @@ const chatSessionClickHandler = (item) => {
   //TODO 消息记录数要清空
   messageList.value = [];
 
-  messageCountInfo.page = 0
+  messageCountInfo.pageNo = 0
   messageCountInfo.totalPage = 1
-  messageCountInfo.maxMessageageId = null
+  messageCountInfo.maxMessageId = null
   messageCountInfo.noData = false
 
   loadChatMessage();
   //设置选中session
-  setSessionSelect({ contactId: item.contactId, sessionId: item.sessionId })
+  setSessionSelect(item.contactId, item.sessionId)
 }
 
 const setSessionSelect = (contactId, sessionId) => {
@@ -212,7 +212,10 @@ const onRecivemessage = () => {
       // TODO 未读消息气泡展示
     } else {
       Object.assign(currentChatSession.value, message.extendData);
-      messageList.value.push()
+      const exists = messageList.value.some(item => String(item.messageId) === String(message.messageId));
+      if (!exists) {
+        messageList.value.push(message);
+      }
       gotoBottom()
     }
   })
@@ -239,7 +242,7 @@ const OnLoadChatMessage = () => {
     messageCountInfo.pageNo = pageNo
     messageCountInfo.pageTotal = pageTotal
     if (pageNo == 1) {
-      messageCountInfo.maxMessageageId = dataList.length > 0 ? dataList[dataList.length - 1].messageId : null
+      messageCountInfo.maxMessageId = dataList.length > 0 ? dataList[dataList.length - 1].messageId : null
       //  滚动条滚动到最底部
       gotoBottom()
     }
@@ -262,12 +265,20 @@ const onAddLoaclMessage = () => {
 
 const sendMessage4LocalHandler = (messageObj) => {
   messageList.value.push(messageObj);
+  // 发消息成功后，用服务端返回的真实 sessionId 同步更新本地会话
   const chatSession = chatSessionList.value.find(item => {
-    return item.sessionId == messageObj.sessionId;
+    return item.contactId == messageObj.contactId;
   })
   if (chatSession) {
+    if (messageObj.sessionId) {
+      chatSession.sessionId = messageObj.sessionId;
+    }
     chatSession.lastMessage = messageObj.lastMessage;
     chatSession.lastReceiveTime = messageObj.sendTime;
+  }
+  // 同步更新 currentChatSession 的 sessionId（防止 TEMP 未被替换）
+  if (messageObj.sessionId && currentChatSession.value.sessionId !== messageObj.sessionId) {
+    currentChatSession.value.sessionId = messageObj.sessionId;
   }
   sortChatSessionList(chatSessionList.value)
   gotoBottom()
