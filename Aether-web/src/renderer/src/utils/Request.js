@@ -8,7 +8,7 @@ const responseTypeJson = 'json';
 let loading = null;
 const instance = axios.create({
     withcredentials: true,
-    baseURL: (import.meta.env.PRoD ? Api.prodDomain :"") + "/api",
+    baseURL: (import.meta.env.PROD ? Api.prodDomain : "") + "/api",
     timeout: 10 * 1000,
 });
 //请求前拦截器
@@ -44,7 +44,7 @@ instance.interceptors.response.use(
         if (response.config.responseType === 'blob' || response.config.responseType === 'arraybuffer') {
             return responseData;
         }
-        
+
         //正常请求
         if (responseData.code == 200) {
             return responseData;

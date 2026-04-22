@@ -225,38 +225,80 @@ expressServer.get("/file", async (req, res) => {
 })
 
 //从服务器下载文件
+// const downloadFile = (fileId, showCover, savePath, partType) => {
+//     showCover = showCover + "";
+//     let url = `${getDomain()}/api/chat/downloadFile`
+//     const token = store.getUserData('token');
+//     console.log(token)
+//     return new Promise(async (resolve, reject) => {
+//         const config = {
+//             responseType: "stream",
+//             headers: { 'Content-Type': 'multipart/form-data', 'token': token }
+//         }
+//         let response = await axios.post(url, {
+//             fileId,
+//             showCover
+//         }, config);
+//         const folder = path.dirname(savePath);
+//         mkdirs(folder);
+//         const stream = fs.createWriteStream(savePath);
+//         if (response.headers['content-type'] == "application/json") {
+//             let resourcesPath = getResourcesPath();
+//             if (partType == "avatar") {
+//                 fs.createReadStream(resourcesPath + "/assets/user.png").pipe(stream);
+//             } else {
+//                 fs.createReadStream(resourcesPath + "/assets/404.png").pipe(stream);
+//             }
+//         } else {
+//             response.data.pipe(stream);
+//         }
+//         stream.on("finish", () => {
+//             stream.close();
+//             resolve();
+//         })
+//     })
+// }
 const downloadFile = (fileId, showCover, savePath, partType) => {
     showCover = showCover + "";
     let url = `${getDomain()}/api/chat/downloadFile`
     const token = store.getUserData('token');
-    console.log(token)
     return new Promise(async (resolve, reject) => {
-        const config = {
-            responseType: "stream",
-            headers: { 'Content-Type': 'multipart/form-data', 'token': token }
-        }
-        let response = await axios.post(url, {
-            fileId,
-            showCover
-        }, config);
-        const folder = path.dirname(savePath);
-        mkdirs(folder);
-        const stream = fs.createWriteStream(savePath);
-        if (response.headers['content-type'] == "application/json") {
-            let resourcesPath = getResourcesPath();
-            if (partType == "avatar") {
-                fs.createReadStream(resourcesPath + "/assets/user.png").pipe(stream);
+        try {
+            const config = {
+                responseType: "stream",
+                headers: { 'Content-Type': 'multipart/form-data', 'token': token }
+            };
+            let response = await axios.post(url, {
+                fileId,
+                showCover,
+                partType
+            }, config);
+
+            const folder = path.dirname(savePath);
+            mkdirs(folder);
+            const stream = fs.createWriteStream(savePath);
+
+            if (response.headers['content-type'] == "application/json") {
+                let resourcesPath = getResourcesPath();
+                if (partType == "avatar") {
+                    fs.createReadStream(resourcesPath + "/assets/user.png").pipe(stream);
+                } else {
+                    fs.createReadStream(resourcesPath + "/assets/404.png").pipe(stream);
+                }
             } else {
-                fs.createReadStream(resourcesPath + "/assets/404.png").pipe(stream);
+                response.data.pipe(stream);
             }
-        } else {
-            response.data.pipe(stream);
+
+            stream.on("finish", () => {
+                stream.close();
+                resolve();
+            });
+
+            stream.on("error", reject);
+        } catch (err) {
+            reject(err);
         }
-        stream.on("finish", () => {
-            stream.close();
-            resolve();
-        })
-    })
+    });
 }
 
 const createCover = (filePath) => {

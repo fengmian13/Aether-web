@@ -1,15 +1,14 @@
 <template>
-  <div class="user-avatar" @click="showDetailHandler"
-    :style="{ width: width + 'px', height: width + 'px', 'border-radius': borderRadius + 'px' }">
-    <ShowLocalImage :width="width" :fileId="userId" partType="avatarInfoStore.getFoceReload(userId)" :forceGet="true">
+  <div class="user-avatar" :style="{ width: width + 'px', height: width + 'px', 'border-radius': borderRadius + 'px' }"
+    @click="showDetailHandler">
+    <ShowLocalImage :width="width" :fileId="userId" partType="avatar" :forceGet="avatarInfoStore.getFoceReload(userId)">
     </ShowLocalImage>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue'
 const { proxy } = getCurrentInstance()
-
 import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
 const avatarInfoStore = useAvatarInfoStore()
 
@@ -30,11 +29,30 @@ const props = defineProps({
     default: false
   }
 })
+
 const showDetailHandler = () => {
   if (!props.showDetail) {
     return
   }
-  // TODO 查看图片详情
+  //强制更新设置为false
+  avatarInfoStore.setFoceReload(props.userId, false)
+  //打开窗口查看,查看详情强制更新图片
+  window.ipcRenderer.send('newWindow', {
+    windowId: 'media',
+    title: '图片查看',
+    path: `/showMedia`,
+    data: {
+      fileList: [
+        {
+          fileId: props.userId,
+          fileType: 0,
+          partType: 'avatar',
+          status: 1,
+          forceGet: true
+        }
+      ]
+    }
+  })
 }
 </script>
 

@@ -5,7 +5,22 @@ import store from "./store"
 
 import { saveOrUpdateChatSessionBatch4Init, saveOrUpdate4Message, selectUserSessionByContactId } from "./db/ChatSessionUserModel"
 import { updateContactNoReadCount } from "./db/UserSettingModel"
-import { saveMessage, saveMessageBatch } from "./db/ChatMessageModel"
+import { saveMessage, saveMessageBatch, updateMessage } from "./db/ChatMessageModel"
+
+const FILE_TYPE_MAP = {
+    jpeg: 0, jpg: 0, png: 0, gif: 0, bmp: 0, webp: 0,
+    mp4: 1, avi: 1, rmvb: 1, mkv: 1, mov: 1
+}
+
+const getFileTypeByName = (fileName = "") => {
+    const suffixIndex = fileName.lastIndexOf(".");
+    if (suffixIndex === -1) {
+        return 2;
+    }
+    const suffix = fileName.substring(suffixIndex + 1).toLowerCase();
+    const fileType = FILE_TYPE_MAP[suffix];
+    return fileType == undefined ? 2 : fileType;
+}
 
 let ws = null;
 let maxReConnectTimes = null;
@@ -37,12 +52,33 @@ const createWs = () => {
         console.log("服务器-ws返回数据：", e.data);
         const message = JSON.parse(e.data);
         let messageType = message.messageType;
+        if (messageType !== undefined && messageType !== null && messageType !== "") {
+            const normalizedMessageType = Number(messageType);
+            if (!Number.isNaN(normalizedMessageType)) {
+                messageType = normalizedMessageType;
+                message.messageType = normalizedMessageType;
+            }
+        }
+        if (message.contactType !== undefined && message.contactType !== null && message.contactType !== "") {
+            const normalizedContactType = Number(message.contactType);
+            if (!Number.isNaN(normalizedContactType)) {
+                message.contactType = normalizedContactType;
+            }
+        }
 
         // 兼容服务端Bug：服务端对于普通文本消息可能漏传了 messageType 导致其默认为 0
         // 如果是 0，且没有 extendData 初始化数据包，却包含了实质的 messageId，说明这是一条真实的聊天消息，我们在前端强转为 2
         if (messageType === 0 && !message.extendData && message.messageId) {
-            messageType = 2;
-            message.messageType = 2;
+            if (message.fileName) {
+                messageType = 5;
+                message.messageType = 5;
+            } else {
+                messageType = 2;
+                message.messageType = 2;
+            }
+        }
+        if ((messageType === 5 || message.messageType === 5) && message.fileType == null) {
+            message.fileType = getFileTypeByName(message.fileName);
         }
 
         switch (messageType) {
@@ -80,7 +116,12 @@ const createWs = () => {
                 }
 
                 // 修复单聊时contactId为发送人的问题（兼容服务端没有回传contactType的情况）
-                const isSingleChat = (message.contactType === 0 || !message.contactType);
+                const isSingleChat = (
+                    message.contactType === 0 ||
+                    message.contactType === undefined ||
+                    message.contactType === null ||
+                    message.contactType === ""
+                );
                 if (isSingleChat && message.sendUserId !== store.getUserId()) {
                     message.contactId = message.sendUserId;
                     sessionInfo.contactId = message.sendUserId;

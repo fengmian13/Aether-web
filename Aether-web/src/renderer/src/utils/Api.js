@@ -24,6 +24,7 @@ const api = {
     getContactInfo: "/userContact/getContactInfo",//获取联系人信息
     sendMessage: "/chat/sendMessage",//发送消息
     sendMessageFile: "/chat/sendMessageFile",//上传文件
+    saveUserInfo: "/userInfo/saveUserInfo",
 }
 
 export default api;
