@@ -200,7 +200,7 @@ const onRecivemessage = () => {
     }
 
     let curSession = chatSessionList.value.find((item) => {
-      return item.sessionId == message.sessionId
+      return item.contactId == message.contactId
     })
     if (curSession == null) {
       chatSessionList.value.push(message.extendData)
@@ -208,7 +208,7 @@ const onRecivemessage = () => {
       Object.assign(curSession, message.extendData)
     }
     sortChatSessionList(chatSessionList.value);
-    if (message.sessionId != currentChatSession.value.sessionId) {
+    if (message.contactId != currentChatSession.value.contactId) {
       // TODO 未读消息气泡展示
     } else {
       Object.assign(currentChatSession.value, message.extendData);

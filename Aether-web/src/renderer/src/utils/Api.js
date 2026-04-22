@@ -23,6 +23,7 @@ const api = {
     leaveGroup: "/group/leaveGroup",//退出群组
     getContactInfo: "/userContact/getContactInfo",//获取联系人信息
     sendMessage: "/chat/sendMessage",//发送消息
+    sendMessageFile: "/chat/sendMessageFile",//上传文件
 }
 
 export default api;

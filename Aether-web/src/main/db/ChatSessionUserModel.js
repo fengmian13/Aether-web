@@ -85,7 +85,7 @@ const topChatSession = (contactId, topType) => {
     return update("chat_session_user", sessionInfo, paramData);
 }
 
-const updateSessionInfo4Message = async (currentSessionId, { sessionId, contactName, lastMessage, lastReceiveTime, contactId, memberCount }) => {
+const updateSessionInfo4Message = async (currentSessionId, { sessionId, contactName, lastMessage, lastReceiveTime, contactId, memberCount, sendUserId }) => {
     const params = [lastMessage, lastReceiveTime];
     let sql = "update chat_session_user set last_message=?,last_receive_time=?,status = 1";
     if (contactName) {
@@ -102,8 +102,10 @@ const updateSessionInfo4Message = async (currentSessionId, { sessionId, contactN
         sql = sql + ",session_id = ?"
         params.push(sessionId);
     }
-    //未选中当前session增加未读消息数
-    if (sessionId !== currentSessionId) {
+    
+    //未选中当前联系人 且 发送人不是自己，才增加未读消息数
+    let currentContactId = store.getUserData("currentContactId");
+    if (contactId !== currentContactId && sendUserId !== store.getUserId()) {
         sql = sql + ",no_read_count = no_read_count + 1";
     }
     sql = sql + " where user_id = ? and contact_id = ?";

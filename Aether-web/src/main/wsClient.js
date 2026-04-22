@@ -36,7 +36,15 @@ const createWs = () => {
     ws.onmessage = async function (e) {
         console.log("服务器-ws返回数据：", e.data);
         const message = JSON.parse(e.data);
-        const messageType = message.messageType;
+        let messageType = message.messageType;
+
+        // 兼容服务端Bug：服务端对于普通文本消息可能漏传了 messageType 导致其默认为 0
+        // 如果是 0，且没有 extendData 初始化数据包，却包含了实质的 messageId，说明这是一条真实的聊天消息，我们在前端强转为 2
+        if (messageType === 0 && !message.extendData && message.messageId) {
+            messageType = 2;
+            message.messageType = 2;
+        }
+
         switch (messageType) {
             case 0://ws连接成功
                 //保存会话消息
@@ -54,24 +62,48 @@ const createWs = () => {
                 break;
             case 2://聊天消息
             case 5://图片视频消息
-                if (message.sendUserId == store.getUserId() && message.contactType == 1) {
+                //如果是群聊消息，那么这个群里的所有人都会收到聊天消息，发送人和接收人是同一个人不做处理 
+                if (message.sendUserId === store.getUserId() && message.contactType == 1) {
                     break;
                 }
-                const sessionInfo = {}
+                //收到ws消息更新会话信息
+                const sessionInfo = {};
                 if (message.extendData && typeof message.extendData === "object") {
                     Object.assign(sessionInfo, message.extendData);
                 } else {
                     Object.assign(sessionInfo, message);
+                    //单聊更新联系人名称
                     if (message.contactType == 0 && messageType != 1) {
                         sessionInfo.contactName = message.sendUserNickName;
                     }
                     sessionInfo.lastReceiveTime = message.sendTime;
                 }
+
+                // 修复单聊时contactId为发送人的问题（兼容服务端没有回传contactType的情况）
+                const isSingleChat = (message.contactType === 0 || !message.contactType);
+                if (isSingleChat && message.sendUserId !== store.getUserId()) {
+                    message.contactId = message.sendUserId;
+                    sessionInfo.contactId = message.sendUserId;
+                    // 同步补齐空缺的 contactType，防止后续使用出错
+                    message.contactType = 0;
+                    sessionInfo.contactType = 0;
+                }
+
+                //11退出群聊 12移除群聊 减少成员数量
+                if (messageType == 9 || messageType == 12 || messageType == 11) {
+                    sessionInfo.memberCount = message.memberCount;
+                }
+                console.log("sessionInfo", sessionInfo);
                 await saveOrUpdate4Message(store.getUserData("currentSessionId"), sessionInfo);
                 //写入本地消息
                 await saveMessage(message);
+                //查询本地session 单聊联系人就是发送人，群聊联系人就是群号
                 const dbSessionInfo = await selectUserSessionByContactId(message.contactId);
                 message.extendData = dbSessionInfo;
+                //退出群聊，当前用户不收到消息
+                if (messageType == 11 && leaveGroupUserId == store.getUserId()) {
+                    break;
+                }
                 sender.send("reciveMessage", message);
                 break;
         }

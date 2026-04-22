@@ -99,9 +99,11 @@ const OnSetSessionSelect = () => {
   ipcMain.on("setSessionSelect", async (e, { contactId, sessionId }) => {
     if (sessionId) {
       store.setUserData("currentSessionId", sessionId)
+      store.setUserData("currentContactId", contactId)
       readAll(contactId);//选中会话
     } else {
       store.deleteUserData("currentSessionId")
+      store.deleteUserData("currentContactId")
     }
   })
 };

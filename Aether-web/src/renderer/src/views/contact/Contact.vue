@@ -18,25 +18,18 @@
             <div class="part-title">{{ item.partName }}</div>
 
             <div class="part-list">
-              <div
-                v-for="sub in item.children"
-                :key="sub.path"
-                :class="['part-item', sub.path == route.path ? 'active' : '']"
-                @click="handleMenuClick(sub)"
-              >
+              <div v-for="sub in item.children" :key="sub.path"
+                :class="['part-item', sub.path == route.path ? 'active' : '']" @click="handleMenuClick(sub)">
                 <div class="icon-box" :style="{ background: sub.iconBgColor }">
                   <span :class="['iconfont', sub.icon]"></span>
                 </div>
                 <div class="text">{{ sub.name }}</div>
               </div>
               <template v-for="contact in item.contactData" :key="contact[item.contactId]">
-                <div
-                  :class="[
-                    'part-item',
-                    contact[item.contactId] == route.query.contactId ? 'active' : ''
-                  ]"
-                  @click="contactDetail(contact, item)"
-                >
+                <div :class="[
+                  'part-item',
+                  contact[item.contactId] == route.query.contactId ? 'active' : ''
+                ]" @click="contactDetail(contact, item)">
                   <Avatar :userId="contact[item.contactId]" :width="35"></Avatar>
                   <div class="text">{{ contact[item.contactName] }}</div>
                 </div>
@@ -199,7 +192,8 @@ const loadContact = async (contactType) => {
     return
   }
   if (contactType === 'GROUP') {
-    partList[2].contactData = result.data
+    partList[1].contactData = result.data.filter(item => item.groupRole === '01' || item.groupRole === '03')
+    partList[2].contactData = result.data.filter(item => item.groupRole === '02')
   } else if (contactType === 'USER') {
     partList[3].contactData = result.data
   }
@@ -208,14 +202,8 @@ loadContact('GROUP')
 loadContact('USER')
 
 const loadMyGroup = async () => {
-  let result = await proxy.Request({
-    url: proxy.Api.loadMyGroup,
-    showLoading: false
-  })
-  if (!result) {
-    return
-  }
-  partList[1].contactData = result.data
+  // 由于 loadContact 已经处理了分组逻辑，直接调用它即可
+  await loadContact('GROUP')
 }
 loadMyGroup()
 
@@ -317,7 +305,8 @@ watch(
   padding: 10px 12px;
   cursor: pointer;
   transition: background-color 0.2s;
-  height: 60px; /* 稍微增加高度以容纳状态文字 */
+  height: 60px;
+  /* 稍微增加高度以容纳状态文字 */
 }
 
 .part-item:hover {
@@ -429,6 +418,7 @@ watch(
 .icon-man:before {
   content: '♂';
 }
+
 .icon-woman:before {
   content: '♀';
 }

@@ -116,6 +116,7 @@ const sendMessageDo = async (messageObj = {
     })
     return
   }
+  console.log(messageObj.messageType)
   messageObj.sessionId = props.currentChatSession.sessionId;
   messageObj.sendUserId = userInfoStore.getUserInfo().userId;
   messageObj.contactId = props.currentChatSession.contactId;
