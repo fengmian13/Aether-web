@@ -45,7 +45,7 @@ const getFFprobePath = () => {
     return path.join(getResourcesPath(), ffprobePath);
 }
 const getFFmegPath = () => {
-    return path, join(getResourcesPath(), ffmpegPath)
+    return path.join(getResourcesPath(), ffmpegPath)
 }
 
 const execCommand = (command) => {
@@ -54,7 +54,7 @@ const execCommand = (command) => {
             console.log("ffmpeg命令:", command);
             if (error) {
                 console.error("执行命令失败", error);
-                reject(error); // 👈 建议添加：错误时拒绝 Promise
+                return reject(error);
             }
             resolve(stdout);
         });
@@ -63,26 +63,52 @@ const execCommand = (command) => {
 
 const saveFile2Local = (messageId, filePath, fileType) => {
     return new Promise(async (resolve, reject) => {
-        let ffmpegPath = getFFmegPath()
-        let savePath = await getLocalFilePath("chat", false, messageId);
-        fs.copyFileSync(filePath, savePath);
-        let coverPath = null;
-        if (fileType != 2) {
-            let command = `${getFFprobePath()} -v error -select_streams v:0 -show_entries stream=codec_name "${filePath}"`;
-            let result = await execCommand(command);
-            result = result.replaceAll("\r\n", "");
-            result = result.substring(result.indexOf("=") + 1);
-            let codec = result.substring(0, result.indexOf("["));
-            if ("hevc" === codec) {
-                command = `${ffmpegPath} -y -i "${filePath}" -c:v libx264 -crf 20 "${savePath}"`;
+        try {
+            let ffmpegPath = getFFmegPath()
+            let savePath = await getLocalFilePath("chat", false, messageId);
+
+            // 修复1：必须先确保目录存在，然后再执行复制操作
+            const dir = path.dirname(savePath);
+            if (!fs.existsSync(dir)) {
+                mkdirs(dir);
+            }
+
+            fs.copyFileSync(filePath, savePath);
+            let coverPath = null;
+
+            if (fileType != 2) {
+                let command = `${getFFprobePath()} -v error -select_streams v:0 -show_entries stream=codec_name "${filePath}"`;
+                let result = await execCommand(command);
+                result = result.replaceAll("\r\n", "");
+                result = result.substring(result.indexOf("=") + 1);
+                let codec = result.substring(0, result.indexOf("["));
+
+                if ("hevc" === codec) {
+                    const tempPath = savePath + ".tmp.mp4";
+
+                    // 修复2：FFmpeg 应该输出到 tempPath，而不是 savePath
+                    command = `${ffmpegPath} -y -i "${filePath}" -c:v libx264 -crf 20 "${tempPath}"`;
+                    await execCommand(command);
+
+                    // 替换原文件 (先删除旧的 savePath，再把临时文件重命名过来)
+                    if (fs.existsSync(savePath)) {
+                        fs.unlinkSync(savePath);
+                    }
+                    fs.renameSync(tempPath, savePath);
+                }
+
+                coverPath = savePath + cover_image_suffix;
+                command = `${ffmpegPath} -i "${savePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
                 await execCommand(command);
             }
-            coverPath = savePath + cover_image_suffix;
-            command = `${ffmpegPath} -i "${savePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
-            await execCommand(command);
+
+            uploadFile(messageId, savePath, coverPath);
+            resolve();
+        } catch (error) {
+            // 修复3：捕获异常并抛给外层的 Promise，避免 UnhandledPromiseRejectionWarning
+            console.error("saveFile2Local 发生错误:", error);
+            reject(error);
         }
-        uploadFile(messageId, savePath, coverPath);
-        resolve();
     })
 }
 
@@ -115,31 +141,36 @@ const uploadFile = (messageId, savePath, coverPath) => {
 };
 const getLocalFilePath = (partType, showCover, fileId) => {
     return new Promise(async (resolve, reject) => {
-        let localFolder = store.getUserData("localFileFolder");
-        let localPath = null;
-        if (partType == "avatar") {
-            localFolder = localFolder + "/avatar/"
-            if (!fs.existsSync(localFolder)) {
-                mkdirs(localFolder);
+        try {
+            let localFolder = store.getUserData("localFileFolder");
+            let localPath = null;
+            if (partType == "avatar") {
+                // 修复：使用 path.join
+                localFolder = path.join(localFolder, "avatar");
+                if (!fs.existsSync(localFolder)) {
+                    mkdirs(localFolder);
+                }
+                localPath = path.join(localFolder, fileId + image_suffix);
+            } else if (partType == "chat") {
+                let messageInfo = await selectByMessageId(fileId);
+                const month = moment(Number.parseInt(messageInfo.sendTime)).format("YYYYMM");
+                // 修复：使用 path.join
+                localFolder = path.join(localFolder, month);
+                if (!fs.existsSync(localFolder)) {
+                    mkdirs(localFolder);
+                }
+                let fileSuffix = messageInfo.fileName;
+                fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf("."));
+                localPath = path.join(localFolder, fileId + fileSuffix);
             }
-            localPath = localFolder + fileId + image_suffix;
-        } else if (partType == "chat") {
-            let messageInfo = await selectByMessageId(fileId);
-            const month = moment(Number.parseInt(messageInfo.sendTime)).format("YYYYMM");
-            localFolder = localFolder + "/" + month;
-            if (!fs.existsSync(localFolder)) {
-                mkdirs(localFolder);
+            if (showCover) {
+                localPath = localPath + cover_image_suffix;
             }
-            let fileSuffix = messageInfo.fileName;
-            fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf("."));
-            localPath = localFolder + "/" + fileId + fileSuffix;
+            resolve(localPath);
+        } catch (error) {
+            reject(error); // 抛出内部异常
         }
-        if (showCover) {
-            localPath = localPath + cover_image_suffix;
-        }
-        resolve(localPath);
     })
-
 }
 
 let server = null;
@@ -164,25 +195,33 @@ const FILE_TYPE_CONTENT_TYPE = {
 }
 
 expressServer.get("/file", async (req, res) => {
-    let { partType, fileType, fileId, showCover, forceGet } = req.query;
-    if (!partType || !fileId) {
-        res.send("请求参数错误");
-        return;
-    }
-    showCover = showCover == undefined ? false : Boolean(showCover);
-    const localPath = await getLocalFilePath(partType, showCover, fileId);
-    if (!fs.existsSync(localPath) || forceGet == "true") {
-        if (forceGet == "true" && partType == "avatar") {
-            await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
+    try {
+        let { partType, fileType, fileId, showCover, forceGet } = req.query;
+        if (!partType || !fileId) {
+            res.status(400).send("请求参数错误");
+            return;
         }
-        await downloadFile(fileId, showCover, localPath, partType);
+        showCover = showCover == undefined ? false : Boolean(showCover);
+        const localPath = await getLocalFilePath(partType, showCover, fileId);
+
+        if (!fs.existsSync(localPath) || forceGet == "true") {
+            if (forceGet == "true" && partType == "avatar") {
+                await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
+            }
+            await downloadFile(fileId, showCover, localPath, partType);
+        }
+
+        const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
+        let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
+
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader('Content-Type', contentType);
+        fs.createReadStream(localPath).pipe(res);
+        return;
+    } catch (error) {
+        console.error("加载文件时发生错误:", error);
+        res.status(500).send("Server internal error"); // 防止引发未捕获的 Promise 异常
     }
-    const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
-    let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader('Content-Type', contentType);
-    fs.createReadStream(localPath).pipe(res);
-    return;
 })
 
 //从服务器下载文件
@@ -200,7 +239,7 @@ const downloadFile = (fileId, showCover, savePath, partType) => {
             fileId,
             showCover
         }, config);
-        const folder = savePath.substring(0, savePath.lastIndexOf("/"));
+        const folder = path.dirname(savePath);
         mkdirs(folder);
         const stream = fs.createWriteStream(savePath);
         if (response.headers['content-type'] == "application/json") {

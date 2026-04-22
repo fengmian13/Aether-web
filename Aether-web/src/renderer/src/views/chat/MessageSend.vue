@@ -154,12 +154,22 @@ const sendMessageDo = async (messageObj = {
   // 保存本地原始字段，服务端可能不返回这些
   const origContent = messageObj.messageContent;
   const origType = messageObj.messageType;
+  const origFileName = messageObj.fileName;
+  const origFilePath = messageObj.filePath;
+  const origFileSize = messageObj.fileSize;
+  const origFileType = messageObj.fileType;
+  const origSuffix = messageObj.Suffix;
 
   Object.assign(messageObj, result.data);
 
   // 服务端若未返回这些必填字段，使用本地值兜底
   if (!messageObj.messageContent) messageObj.messageContent = origContent;
   if (!messageObj.messageType) messageObj.messageType = origType;
+  if (!messageObj.fileName) messageObj.fileName = origFileName;
+  if (!messageObj.filePath) messageObj.filePath = origFilePath;
+  if (messageObj.fileSize == null) messageObj.fileSize = origFileSize;
+  if (messageObj.fileType == null) messageObj.fileType = origFileType;
+  if (!messageObj.Suffix) messageObj.Suffix = origSuffix;
   messageObj.contactType = props.currentChatSession.contactType;
   // 若服务端未返回 messageId，生成一个临时 ID 保证主键不为空
   if (!messageObj.messageId) {
@@ -176,19 +186,25 @@ const uploadFile = (file) => {
   uploadRef.value.clearFiles();
 }
 //根据文件名的后缀判断文件类型
-const getFileTypeByName = (fileName) => {
-  const fileSuffix = fileName.substr(fileName.lastIndexOf(".") + 1);
-  return getFileType(fileSuffix);
+const getFileMetaByName = (fileName = '') => {
+  const suffixIndex = fileName.lastIndexOf(".");
+  const suffix = suffixIndex > -1 ? fileName.substring(suffixIndex + 1).toLowerCase() : '';
+  const fileType = getFileType(suffix);
+  return {
+    suffix,
+    fileType
+  };
 }
 const uploadFileDo = (file) => {
-  const Suffix = getFileTypeByName(file.name);
+  const { suffix, fileType } = getFileMetaByName(file.name);
   sendMessageDo({
-    messageContent: '[' + getFileType(Suffix) + ']',
+    messageContent: '[' + getFileType(fileType) + ']',
     messageType: 5,
     fileSize: file.size,
     fileName: file.name,
     filePath: file.path,
-    Suffix: Suffix
+    fileType,
+    Suffix: suffix
   }, false)
 }
 
