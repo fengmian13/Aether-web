@@ -9,7 +9,7 @@ import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local, createCover, saveAs } from './file'
+import { saveFile2Local, createCover, saveAs, saveClipBoardFile } from './file'
 import { saveWindow, getWindow, delWindow, windowManage } from './windowProxy'
 
 // 登录或注册
@@ -147,6 +147,15 @@ const onSaveAs = () => {
   });
 }
 
+//读取剪切板内容
+const onSaveClipBoardFile = () => {
+  ipcMain.on("saveClipBoardFile", async (e, file) => {
+    const result = await saveClipBoardFile(file);
+    console.log("result", result);
+    e.sender.send("saveClipBoardFileCallback", result);
+  });
+}
+
 const openWindow = ({ windowId, title = "Ather", path, width = 960, height = 720, data }) => {
   const localServerPort = store.getUserData("localServerPort");
   data.localServerPort = localServerPort;
@@ -223,5 +232,6 @@ export {
   onCreateCover,
   onAddChatSession,
   onOpenNewWindow,
-  onSaveAs
+  onSaveAs,
+  onSaveClipBoardFile
 }

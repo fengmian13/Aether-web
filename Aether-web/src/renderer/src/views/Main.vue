@@ -44,6 +44,9 @@ const userInfoStore = useUserInfoStore()
 import { useGlobalInfoStore } from '@/stores/GlobalInfoStore'
 const globalInfoStore = useGlobalInfoStore()
 
+import { useSysSettingStore } from '@/stores/SysSettingStore'
+const sysSettingStore = useSysSettingStore()
+
 const menuList = ref([
   {
     name: 'chat',
@@ -83,8 +86,22 @@ const getLoginInfo = async () => {
   userInfoStore.setUserInfo(result.data)
   window.ipcRenderer.send("getLocalStore", result.data.userId + 'localServerPort');
 }
+
+
+//获取系统设置信息 TODO:服务端待添加
+const getSysSetting = async () => {
+  // let result = await proxy.Request({
+  //   url: proxy.Api.getSysSetting
+  // })
+  // if (!result) {
+  //   return
+  // }
+  // sysSettingStore.setSetting(result.data)
+  return
+}
 onMounted(() => {
   getLoginInfo()
+  getSysSetting()
   window.ipcRenderer.on("getLocalStoreCallback", (e, serverPort) => {
     globalInfoStore.setInfo("localServerPort", serverPort);
   });

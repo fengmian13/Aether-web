@@ -25,6 +25,7 @@ const api = {
     sendMessage: "/chat/sendMessage",//发送消息
     sendMessageFile: "/chat/sendMessageFile",//上传文件
     saveUserInfo: "/userInfo/saveUserInfo",
+    saveSysSetting: "/admin/saveSysSetting",//保存系统设置
 }
 
 export default api;
