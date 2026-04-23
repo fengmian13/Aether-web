@@ -31,6 +31,30 @@
       <div class="chat-panel" v-show="Object.keys(currentChatSession).length > 0">
         <div class="message-panel" id="message-panel">
           <div class="message-item" v-for="(data, index) in messageList" :id="'message' + data.messageId">
+
+            <template v-if="
+              index > 1 &&
+              data.sendTime - messageList[index - 1].sendTime >= 300000 &&
+              (data.messageType == 2 || data.messageType == 5)
+            ">
+              <ChatMessageTime :data="data"></ChatMessageTime>
+            </template>
+            <!-- 系统消息
+                  3://群创建成功
+                  1://添加好友成功
+                  9://好友加入群组
+                  11://退出群聊
+                  12://踢出群聊 -->
+            <template v-if="
+              data.messageType == 3 ||
+              data.messageType == 1 ||
+              data.messageType == 9 ||
+              data.messageType == 8 ||
+              data.messageType == 11 ||
+              data.messageType == 12
+            ">
+              <ChatMessageSys :data="data"></ChatMessageSys>
+            </template>
             <template v-if="data.messageType == 1 || data.messageType == 2 || data.messageType == 5">
               <!-- 1:添加好友，2文本消息，5：媒体消息 -->
               <ChatMessage :data="data" :currentChatSession="currentChatSession"
@@ -51,6 +75,8 @@
 <script setup>
 import Blank from '@/components/Blank.vue'
 import ChatMessage from "./ChatMessage.vue"
+import ChatMessageTime from "./ChatMessageTime.vue"
+import ChatMessageSys from "./ChatMessageSys.vue"
 import MessageSend from "./MessageSend.vue"
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
@@ -149,6 +175,8 @@ const messageCountInfo = {
   maxMessageId: null,
   noData: false
 };
+let loadingChatMessage = false
+let distanceBottom = 0
 //点击会话
 const messageList = ref([])
 const chatSessionClickHandler = (item) => {
@@ -160,6 +188,7 @@ const chatSessionClickHandler = (item) => {
   messageCountInfo.totalPage = 1
   messageCountInfo.maxMessageId = null
   messageCountInfo.noData = false
+  loadingChatMessage = false
 
   loadChatMessage();
   //设置选中session
@@ -174,9 +203,14 @@ const setSessionSelect = (contactId, sessionId) => {
 }
 
 const loadChatMessage = () => {
-  if (messageCountInfo.noData) {
+  if (
+    messageCountInfo.noData ||
+    loadingChatMessage ||
+    !currentChatSession.value.sessionId
+  ) {
     return
   }
+  loadingChatMessage = true
   messageCountInfo.pageNo++
   window.ipcRenderer.send("loadChatMessage", {
     sessionId: currentChatSession.value.sessionId,
@@ -217,7 +251,9 @@ const onRecivemessage = () => {
       if (!exists) {
         messageList.value.push(message);
       }
-      gotoBottom()
+      if (distanceBottom <= 60) {
+        gotoBottom()
+      }
     }
   })
 }
@@ -233,12 +269,14 @@ const OnLoadSessionData = () => {
 
 const OnLoadChatMessage = () => {
   window.ipcRenderer.on('loadChatMessageCallback', (e, { dataList, pageTotal, pageNo }) => {
+    loadingChatMessage = false
     if (pageNo == pageTotal) {
       messageCountInfo.noData = true
     }
     dataList.sort((a, b) => {
       return a.messageId - b.messageId
     })
+    const lastMessage = messageList.value[0]
     messageList.value = dataList.concat(messageList.value)
     messageCountInfo.pageNo = pageNo
     messageCountInfo.pageTotal = pageTotal
@@ -246,6 +284,10 @@ const OnLoadChatMessage = () => {
       messageCountInfo.maxMessageId = dataList.length > 0 ? dataList[dataList.length - 1].messageId : null
       //  滚动条滚动到最底部
       gotoBottom()
+    } else {
+      nextTick(() => {
+        document.querySelector('#message' + lastMessage.messageId).scrollIntoView()
+      })
     }
 
   })
@@ -301,6 +343,20 @@ onMounted(() => {
   loadChatSession()
   OnLoadChatMessage()
   onAddLoaclMessage()
+
+  nextTick(() => {
+    const messagePanel = document.querySelector('#message-panel')
+    messagePanel.addEventListener('scroll', (e) => {
+      const scrollTop = e.target.scrollTop
+      //计算距离底部的距离
+      distanceBottom = e.target.scrollHeight - e.target.clientHeight - scrollTop
+      //滚动到顶部，开始分页查询
+      if (scrollTop <= 0 && messageList.value.length > 0) {
+        loadChatMessage()
+      }
+    })
+  })
+
 })
 
 //监听的销毁
