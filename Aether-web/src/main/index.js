@@ -4,8 +4,9 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover, onAddChatSession } from './ipc'
+import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover, onAddChatSession, onOpenNewWindow, onSaveAs } from './ipc'
 import { createTable } from './db/ADB'
+import { saveWindow } from './windowProxy'
 
 
 const login_width = 300;
@@ -31,6 +32,7 @@ function createWindow() {
     }
   })
 
+  saveWindow("main", mainWindow);
 
   if (NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -156,8 +158,12 @@ function createWindow() {
   OnSetSessionSelect();
 
   onCreateCover();
-  
+
   onAddChatSession();
+
+  onOpenNewWindow();
+
+  onSaveAs()
 }
 
 // This method will be called when Electron has finished

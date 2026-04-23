@@ -9,7 +9,8 @@ import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local, createCover } from './file'
+import { saveFile2Local, createCover, saveAs } from './file'
+import { saveWindow, getWindow, delWindow, windowManage } from './windowProxy'
 
 // 登录或注册
 const onLoginOrRegister = (callback) => {
@@ -134,6 +135,79 @@ const onCreateCover = () => {
   });
 };
 
+const onOpenNewWindow = () => {
+  ipcMain.on("newWindow", (e, config) => {
+    openWindow(config);
+  })
+}
+
+const onSaveAs = () => {
+  ipcMain.on("saveAs", async (e, data) => {
+    saveAs(data);
+  });
+}
+
+const openWindow = ({ windowId, title = "Ather", path, width = 960, height = 720, data }) => {
+  const localServerPort = store.getUserData("localServerPort");
+  data.localServerPort = localServerPort;
+  let newWindow = getWindow(windowId);
+  if (!newWindow) {
+    newWindow = new BrowserWindow({
+      icon: icon,
+      width: width,
+      height: height,//380
+      fullscreenable: false,
+      fullscreen: false,
+      maximizable: false,
+      autoHideMenuBar: true,
+      resizable: true,
+      titleBarStyle: 'hidden',
+      frame: true,
+      transparent: true,
+      hasShadow: false,
+      webPreferences: {
+        preload: join(__dirname, '../preload/index.js'),
+        sandbox: false,
+        contextIsolation: false
+      }
+    })
+    //保存窗口
+    saveWindow(windowId, newWindow);
+
+    newWindow.setMinimumSize(600, 484);
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      // newWindow.loadURL(process.env['ELECTRON_RENDERER_URL'] + "#" + path)
+      newWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`);
+    } else {
+      newWindow.loadFile(join(__dirname, `../renderer/index.html`), { hash: `${path}` });
+    }
+    //打开调试窗口
+    // if (NODE_ENV === 'development') {
+    //   newWindow.webContents.openDevTools();
+    // }
+
+    newWindow.on('ready-to-show', () => {
+      console.log("设置title", title);
+      newWindow.setTitle(title);
+      newWindow.show()
+    })
+
+    newWindow.once('show', () => {
+      setTimeout(() => {
+        newWindow.webContents.send('pageInitData', data);
+      }, 500);
+    })
+    newWindow.on('closed', () => {
+      console.log("关闭窗口");
+      delWindow(windowId);
+    })
+  } else {
+    newWindow.show();
+    newWindow.setSkipTaskbar(false)
+    newWindow.webContents.send('pageInitData', data);
+  }
+}
+
 export {
   onLoginOrRegister,
   onLoginSuccess,
@@ -147,5 +221,7 @@ export {
   onAddlocalMessage,
   OnSetSessionSelect,
   onCreateCover,
-  onAddChatSession
+  onAddChatSession,
+  onOpenNewWindow,
+  onSaveAs
 }

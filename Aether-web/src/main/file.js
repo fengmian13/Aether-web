@@ -6,6 +6,7 @@ const { app, ipcMain, shell } = require('electron');
 const { exec } = require("child_process");
 const FormData = require('form-data'); // 引入FormData模块（用于构建表单数据）
 const axios = require('axios'); // 引入axios库
+const { dialog } = require('electron')
 import store from "./store";
 const moment = require('moment');
 moment.locale('zh-cn', {});
@@ -194,33 +195,70 @@ const FILE_TYPE_CONTENT_TYPE = {
     "2": "application/octet-stream"
 }
 
-expressServer.get("/file", async (req, res) => {
-    try {
-        let { partType, fileType, fileId, showCover, forceGet } = req.query;
-        if (!partType || !fileId) {
-            res.status(400).send("请求参数错误");
-            return;
+expressServer.get('/file', async (req, res) => {
+    let { partType, fileType, fileId, showCover, forceGet } = req.query;
+    //console.log("getFile", partType, fileType, fileId, showCover, forceGet);
+    if (!partType || !fileId) {
+        res.send("请求参数错误");
+        return;
+    }
+    showCover = showCover == undefined ? false : Boolean(showCover);
+    const localPath = await getLocalFilePath(partType, showCover, fileId);
+    if (!fs.existsSync(localPath) || forceGet == "true") {
+        if (forceGet == "true" && partType == "avatar") {
+            await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
         }
-        showCover = showCover == undefined ? false : Boolean(showCover);
-        const localPath = await getLocalFilePath(partType, showCover, fileId);
+        await downloadFile(fileId, showCover, localPath, partType);
+    }
 
-        if (!fs.existsSync(localPath) || forceGet == "true") {
-            if (forceGet == "true" && partType == "avatar") {
-                await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
-            }
-            await downloadFile(fileId, showCover, localPath, partType);
-        }
+    //console.log("获取图片", new Date().getTime(), fileId, forceGet, partType);
+    if (forceGet == "true" && partType == "avatar") {
+        getWindow("main").webContents.send("reloadAvatar", fileId);
+    }
 
-        const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
-        let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
-
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader('Content-Type', contentType);
+    const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
+    //图片直接返回
+    let contentType = FILE_TYPE_CONTENT_TYPE[fileType] + fileSuffix;
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader('Content-Type', contentType);
+    //头像，缩略图，文件
+    if (showCover || fileType != "1") {
         fs.createReadStream(localPath).pipe(res);
         return;
-    } catch (error) {
-        console.error("加载文件时发生错误:", error);
-        res.status(500).send("Server internal error"); // 防止引发未捕获的 Promise 异常
+    }
+    //视频文件 需要能够拖动需要通过range来获取文件流
+    let stat = fs.statSync(localPath);
+    let fileSize = stat.size;
+    let range = req.headers.range;
+    if (range) {
+        //有range头才使用206状态码
+        let parts = range.replace(/bytes=/, "").split("-");
+        let start = parseInt(parts[0], 10);
+        let end = parts[1] ? parseInt(parts[1], 10) : start + 999999;
+
+        // end 在最后取值为 fileSize - 1 
+        end = end > fileSize - 1 ? fileSize - 1 : end;
+
+        let chunksize = (end - start) + 1;
+        let stream = fs.createReadStream(localPath, {
+            start,
+            end
+        });
+        let head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': 'video/mp4',
+        };
+        res.writeHead(206, head);
+        stream.pipe(res);
+    } else {
+        let head = {
+            'Content-Length': fileSize,
+            'Content-Type': 'video/mp4',
+        };
+        res.writeHead(200, head);
+        fs.createReadStream(localPath).pipe(res);
     }
 })
 
@@ -301,6 +339,36 @@ const downloadFile = (fileId, showCover, savePath, partType) => {
     });
 }
 
+
+const saveAs = async ({ partType, fileId, fileType }) => {
+    let fileName = "";
+    if (partType == "avatar") {
+        fileName = fileId + image_suffix;
+    } else if (partType == "chat") {
+        let messageInfo = await selectByMessageId(fileId);
+        fileName = messageInfo.fileName;
+    }
+    const localPath = await getLocalFilePath(partType, false, fileId);
+    //文件类型，没有预览，所以保存的时候判断本地是否有，没有就下载
+    if (fileType == 2) {
+        if (!fs.existsSync(localPath)) {
+            await downloadFile(fileId, false, localPath, partType);
+        }
+    }
+    const options = {
+        title: '保存文件', // 对话框标题
+        defaultPath: fileName
+    }
+    // 显示保存文件的对话框
+    let result = await dialog.showSaveDialog(options);
+    if (result.canceled || result.filePath == '') {
+        return;
+    }
+    const filePath = result.filePath;
+    fs.copyFileSync(localPath, filePath);
+}
+
+
 const createCover = (filePath) => {
     return new Promise(async (resolve, reject) => {
         let ffmpegPath = getFFmegPath();
@@ -323,5 +391,6 @@ export {
     saveFile2Local,
     startLocalServer,
     closeLocalServer,
-    createCover
+    createCover,
+    saveAs
 }

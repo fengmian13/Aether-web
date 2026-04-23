@@ -33,7 +33,8 @@
           <div class="message-item" v-for="(data, index) in messageList" :id="'message' + data.messageId">
             <template v-if="data.messageType == 1 || data.messageType == 2 || data.messageType == 5">
               <!-- 1:添加好友，2文本消息，5：媒体消息 -->
-              <ChatMessage :data="data" :currentChatSession="currentChatSession"></ChatMessage>
+              <ChatMessage :data="data" :currentChatSession="currentChatSession"
+                @showMediaDetail="showMediaDetailHandler"></ChatMessage>
             </template>
           </div>
         </div>
@@ -347,6 +348,38 @@ const onContextMenu = (data, e) => {
     }]
   })
 
+}
+
+//查看媒体详情
+const showMediaDetailHandler = (messageId) => {
+  let showFileList = messageList.value.filter((item) => {
+    return item.messageType == 5
+  })
+  showFileList = showFileList.map((item) => {
+    return {
+      partType: 'chat',
+      fileId: item.messageId,
+      fileType: item.fileType,
+      fileName: item.fileName,
+      fileSize: item.fileSize,
+      forceGet: false
+    }
+  })
+  window.ipcRenderer.send('newWindow', {
+    windowId: 'media',
+    title: '图片查看',
+    path: `/showMedia`,
+    data: {
+      currentFileId: messageId,
+      fileList: showFileList
+    }
+  })
+}
+
+
+const searchClickHandler = (data) => {
+  searchKey.value = undefined
+  chatSessionClickHandler(data)
 }
 </script>
 

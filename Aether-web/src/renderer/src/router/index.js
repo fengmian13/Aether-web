@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('@/views/Login.vue'),
     },
     {
+      path: "/showMedia",
+      name: "展示媒体信息",
+      component: () => import('@/views/show/ShowMedia.vue'),
+    },
+    {
       path: "/main",
       redirect: "/chat",// 默认跳转页
       name: "主页面",
@@ -26,58 +31,58 @@ const router = createRouter({
           component: () => import('@/views/chat/Chat.vue'),
         },
         {
-          path:"/contact",
+          path: "/contact",
           name: "联系人",
           redirect: "/contact/blank",
-          component: ()=> import('@/views/contact/Contact.vue'),
+          component: () => import('@/views/contact/Contact.vue'),
           children: [
             {
-              path:"blank",
+              path: "blank",
               name: "空白页",
-               component: () => import('@/views/contact/BlankPage.vue'),
-            },{
-              path:"/contact/search",
+              component: () => import('@/views/contact/BlankPage.vue'),
+            }, {
+              path: "/contact/search",
               name: "搜索",
-               component: () => import('@/views/contact/Search.vue'),
-            },{
-              path:"/contact/contactNotice",
+              component: () => import('@/views/contact/Search.vue'),
+            }, {
+              path: "/contact/contactNotice",
               name: "申请",
-               component: () => import('@/views/contact/ContactNotice.vue'),
-            },{
-              path:"/contact/userDetail",
+              component: () => import('@/views/contact/ContactNotice.vue'),
+            }, {
+              path: "/contact/userDetail",
               name: "联系人详情",
               component: () => import('@/views/contact/UserDetail.vue'),
-            },{
-              path:"/contact/createGroup",
+            }, {
+              path: "/contact/createGroup",
               name: "创建群组",
               component: () => import('@/views/contact/GroupEdit.vue'),
-            },{
-              path:"/contact/groupDetail",
+            }, {
+              path: "/contact/groupDetail",
               name: "群组详情",
               component: () => import('@/views/contact/GroupDetail.vue'),
             }
           ]
         },
-         {
-          path:"/setting",
+        {
+          path: "/setting",
           name: "设置",
           redirect: "/setting/userInfo",
-          component: ()=> import('@/views/setting/Setting.vue'),
+          component: () => import('@/views/setting/Setting.vue'),
           children: [
             {
-              path:"/setting/userInfo",
+              path: "/setting/userInfo",
               name: "个人信息",
-              component: ()=> import('@/views/setting/UserInfo.vue'),
+              component: () => import('@/views/setting/UserInfo.vue'),
             },
             {
-              path:"fileManage",
+              path: "fileManage",
               name: "文件管理",
-              component: ()=> import('@/views/setting/FileManage.vue'),
+              component: () => import('@/views/setting/FileManage.vue'),
             },
             {
-              path:"about",
+              path: "about",
               name: "关于Aether",
-              component: ()=> import('@/views/setting/About.vue'),
+              component: () => import('@/views/setting/About.vue'),
             }
           ]
         },
