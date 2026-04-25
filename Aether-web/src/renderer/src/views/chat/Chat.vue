@@ -70,9 +70,11 @@
       </div>
     </template>
   </Layout>
+  <ChatGroupDetail ref="ChatGroupDetailRef"></ChatGroupDetail>
 </template>
 
 <script setup>
+import ChatGroupDetail from './ChatGroupDetail.vue'
 import Blank from '@/components/Blank.vue'
 import ChatMessage from "./ChatMessage.vue"
 import ChatMessageTime from "./ChatMessageTime.vue"
@@ -180,6 +182,7 @@ let distanceBottom = 0
 //点击会话
 const messageList = ref([])
 const chatSessionClickHandler = (item) => {
+  distanceBottom = 0
   currentChatSession.value = Object.assign({}, item)
   //TODO 消息记录数要清空
   messageList.value = [];
@@ -329,6 +332,10 @@ const sendMessage4LocalHandler = (messageObj) => {
 //滚动到底部
 const gotoBottom = () => {
   nextTick(() => {
+    //距离底部距离超过200就不自动滚动到底部
+    if (distanceBottom > 200) {
+      return
+    }
     const items = document.querySelectorAll(".message-item")
     if (items.length > 0) {
       setTimeout(() => {
@@ -436,6 +443,12 @@ const showMediaDetailHandler = (messageId) => {
 const searchClickHandler = (data) => {
   searchKey.value = undefined
   chatSessionClickHandler(data)
+}
+
+//群详情
+const chatGroupDetailRef = ref()
+const showGroupDetail = () => {
+  chatGroupDetailRef.value.show(currentChatSession.value.contactId)
 }
 </script>
 

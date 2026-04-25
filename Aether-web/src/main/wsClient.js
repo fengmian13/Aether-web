@@ -86,6 +86,7 @@ const createWs = () => {
                 //保存会话消息
                 await saveOrUpdateChatSessionBatch4Init(message.extendData.chatSessionList);
                 //保存消息
+                console.log("返回的消息：", message.extendData.chatMessageList)
                 await saveMessageBatch(message.extendData.chatMessageList);
                 //更新联系人申请数
                 await updateContactNoReadCount({ userId: store.getUserId(), noReadCount: message.extendData.applyCount });
@@ -96,6 +97,7 @@ const createWs = () => {
                 updateMessage({ status: message.status }, { messageId: message.messageId });
                 sender.send("reciveMessage", message);
                 break;
+            case 1:
             case 2://聊天消息
             case 5://图片视频消息
                 //如果是群聊消息，那么这个群里的所有人都会收到聊天消息，发送人和接收人是同一个人不做处理 

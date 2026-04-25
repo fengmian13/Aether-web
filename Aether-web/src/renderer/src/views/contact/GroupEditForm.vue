@@ -28,43 +28,35 @@ const { proxy } = getCurrentInstance()
 import { userContactStateStore } from '@/stores/ContactStateStore'
 const contactStateStore = userContactStateStore()
 
+import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
+const avatarInfoStore = useAvatarInfoStore()
+
 const formData = ref({})
 const formDataRef = ref()
 
 const rules = {
   groupName: [{ required: true, message: '请输入群组名称' }],
-  joinType: [{ required: true, message: '请选择加入权限' }]
-  // avatarFile: [{ required: true, message: '请上传群组封面' }]
+  joinType: [{ required: true, message: '请选择加入权限' }],
+  avatarFile: [{ required: true, message: '请上传群组封面' }]
 }
 
 const emit = defineEmits(['editBack'])
-const saveCover = (file) => {
-  let fd = new FormData()
-  fd.append('file', file)
-  fd.append('type', '0') // 0 for avatar, assumes backend convention
-  proxy
-    .Request({
-      url: proxy.Api.uploadImage,
-      params: fd,
-      dataType: 'file'
-    })
-    .then((result) => {
-      if (!result) {
-        return
-      }
-      formData.avatarFile = result.fileId // Assumes backend returns { fileId: ... }
-      formData.avatarCover = result.fileName || '' // Optional, if needed
-    })
+//封面保存
+const saveCover = ({ avatarFile, coverFile }) => {
+  formData.value.avatarFile = avatarFile
+  formData.value.avatarCover = coverFile
 }
-
 const submit = async () => {
   formDataRef.value.validate(async (valid) => {
     if (!valid) {
       return
     }
     let params = {}
-    // TODO：重新加载头像
+    // NOTE：重新加载头像
     Object.assign(params, formData.value)
+    if (params.groupId) {
+      avatarInfoStore.setFoceReload(params.groupId, false)
+    }
     let result = await proxy.Request({
       url: proxy.Api.saveGroup,
       params
@@ -80,7 +72,10 @@ const submit = async () => {
     }
     formDataRef.value.resetFields()
     contactStateStore.setContactReload('MY')
-    //TODO 重新加载头像
+    //NOTE 重新加载头像
+    if (params.groupId) {
+      avatarInfoStore.setFoceReload(params.groupId, true)
+    }
   })
 }
 
