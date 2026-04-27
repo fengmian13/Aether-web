@@ -129,8 +129,8 @@ const partList = reactive([
   },
   {
     partName: '我加入的群聊',
-    contactId: 'contactId',
-    contactName: 'contactName',
+    contactId: 'groupId',
+    contactName: 'groupName',
     contactPath: '/contact/groupDetail',
     emptyMsg: '暂未加入群聊',
     children: [],

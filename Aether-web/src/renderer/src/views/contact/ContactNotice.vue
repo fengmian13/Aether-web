@@ -168,7 +168,10 @@ const fetchContactApplyList = async () => {
   error.value = null
   try {
     let result = await proxy.Request({
-      url: proxy.Api.contactNotice
+      url: proxy.Api.contactNotice,
+      params: {
+        pageNo: 1
+      }
     })
     if (!result) return
 

@@ -1,26 +1,12 @@
 <template>
   <div>
-    <Dialog
-      :show="dialogConfig.show"
-      :title="dialogConfig.title"
-      :buttons="dialogConfig.buttons"
-      width="400px"
-      :showCancel="false"
-      @close="dialogConfig.show = false"
-    >
+    <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :buttons="dialogConfig.buttons" width="400px"
+      :showCancel="false" @close="dialogConfig.show = false">
       <el-form :model="formData" :rules="rules" ref="formDataRef" @submit.prevent>
         <!-- input 输入 -->
         <el-form-item label="" prop="">
-          <el-input
-            type="textarea"
-            :rows="5"
-            clearable
-            placeholder="输入申请信息，更容易被通过"
-            v-model.trim="formData.applyInfo"
-            resize="none"
-            show-word-limit
-            maxlength="100"
-          ></el-input>
+          <el-input type="textarea" :rows="5" clearable placeholder="输入申请信息，更容易被通过" v-model.trim="formData.applyInfo"
+            resize="none" show-word-limit maxlength="100"></el-input>
         </el-form-item>
       </el-form>
     </Dialog>
@@ -60,7 +46,7 @@ const submitApply = async () => {
   let result = await proxy.Request({
     url: proxy.Api.apply,
     params: {
-      receiveUserId: contactId,
+      contactId: contactId,
       applyInfo: applyInfo,
       contactType: contactType
     }
