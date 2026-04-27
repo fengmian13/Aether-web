@@ -2,7 +2,7 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const NODE_ENV = process.env.NODE_ENV;
 const path = require('path');
-const { app, ipcMain, shell } = require('electron');
+const { app, ipcMain, shell, BrowserWindow } = require('electron');
 const { exec } = require("child_process");
 const FormData = require('form-data'); // 引入FormData模块（用于构建表单数据）
 const axios = require('axios'); // 引入axios库
@@ -16,8 +16,6 @@ const express = require('express')
 const expressServer = express();
 
 import { selectByMessageId } from "./db/ChatMessageModel";
-import { resourcesPath } from "process";
-
 const cover_image_suffix = "_cover.png";
 const image_suffix = ".png";
 const ffprobePath = "/assets/ffprobe.exe";
@@ -25,6 +23,16 @@ const ffmpegPath = "/assets/ffmpeg.exe"
 
 const getDomain = () => {
     return NODE_ENV !== "development" ? store.getData("prodDomain") : store.getData("devDomain");
+}
+
+const parseBoolean = (value) => {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    if (typeof value === "string") {
+        return value.toLowerCase() === "true";
+    }
+    return false;
 }
 
 const mkdirs = (dir) => {
@@ -204,24 +212,25 @@ const FILE_TYPE_CONTENT_TYPE = {
 }
 
 expressServer.get('/file', async (req, res) => {
+    try {
     let { partType, fileType, fileId, showCover, forceGet } = req.query;
     //console.log("getFile", partType, fileType, fileId, showCover, forceGet);
     if (!partType || !fileId) {
         res.send("请求参数错误");
         return;
     }
-    showCover = showCover == undefined ? false : Boolean(showCover);
+    showCover = parseBoolean(showCover);
     const localPath = await getLocalFilePath(partType, showCover, fileId);
     if (!fs.existsSync(localPath) || forceGet == "true") {
-        if (forceGet == "true" && partType == "avatar") {
-            await downloadFile(fileId, true, localPath + cover_image_suffix, partType);
-        }
         await downloadFile(fileId, showCover, localPath, partType);
     }
 
     //console.log("获取图片", new Date().getTime(), fileId, forceGet, partType);
     if (forceGet == "true" && partType == "avatar") {
-        getWindow("main").webContents.send("reloadAvatar", fileId);
+        const mainWindow = BrowserWindow.getAllWindows().find((win) => !win.isDestroyed());
+        if (mainWindow) {
+            mainWindow.webContents.send("reloadAvatar", fileId);
+        }
     }
 
     const fileSuffix = localPath.substring(localPath.lastIndexOf(".") + 1);
@@ -267,6 +276,12 @@ expressServer.get('/file', async (req, res) => {
         };
         res.writeHead(200, head);
         fs.createReadStream(localPath).pipe(res);
+    }
+    } catch (error) {
+        console.error("get /file failed:", error);
+        if (!res.headersSent) {
+            res.status(500).send("file service error");
+        }
     }
 })
 
@@ -379,21 +394,47 @@ const saveAs = async ({ partType, fileId, fileType }) => {
 
 const createCover = (filePath) => {
     return new Promise(async (resolve, reject) => {
-        let ffmpegPath = getFFmegPath();
-        let avatarPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp");
-        let command = `${ffmpegPath} -i "${filePath}" "${avatarPath}" -y`;
-        await execCommand(command);
+        try {
+            let ffmpegPath = getFFmegPath();
+            let avatarPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp");
+            let command = `${ffmpegPath} -i "${filePath}" "${avatarPath}" -y`;
+            await execCommand(command);
 
-        let coverPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp_cover");
-        command = `${ffmpegPath} -i "${filePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
-        await execCommand(command);
+            let coverPath = await getLocalFilePath("avatar", false, store.getUserId() + "_temp_cover");
+            command = `${ffmpegPath} -i "${filePath}" -y -vframes 1 -vf "scale=min(170\\,iw*min(170/iw\\,170/ih)):min(170\\,ih*min(170/iw\\,170/ih))" "${coverPath}"`;
+            await execCommand(command);
 
-        resolve({
-            avatarStream: fs.readFileSync(avatarPath),
-            coverStream: fs.readFileSync(coverPath)
-        });
+            const avatarStream = fs.readFileSync(avatarPath);
+            const coverStream = fs.readFileSync(coverPath);
+
+            if (fs.existsSync(avatarPath)) {
+                fs.unlinkSync(avatarPath);
+            }
+            if (fs.existsSync(coverPath)) {
+                fs.unlinkSync(coverPath);
+            }
+
+            resolve({
+                avatarStream,
+                coverStream
+            });
+        } catch (error) {
+            reject(error);
+        }
     });
 };
+
+const saveAvatar2Local = async ({ userId, avatarByteArray, coverByteArray }) => {
+    if (!userId) {
+        return;
+    }
+    const avatarPath = await getLocalFilePath("avatar", false, userId);
+    const coverPath = await getLocalFilePath("avatar", true, userId);
+    const avatarBuffer = Buffer.from(avatarByteArray);
+    const coverBuffer = Buffer.from(coverByteArray);
+    fs.writeFileSync(avatarPath, avatarBuffer);
+    fs.writeFileSync(coverPath, coverBuffer);
+}
 
 //保存剪切板内容
 const saveClipBoardFile = async (file) => {
@@ -414,6 +455,7 @@ export {
     startLocalServer,
     closeLocalServer,
     createCover,
+    saveAvatar2Local,
     saveAs,
     saveClipBoardFile
 }

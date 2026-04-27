@@ -2,7 +2,7 @@
   <div class="main">
     <div class="left-sider">
       <div>
-        <Avatar :userId="userInfoStore.getUserInfo().userId" :width="35" :showDetail="false"></Avatar>
+        <Avatar :userId="userInfoStore.getUserInfo()?.userId || ''" :width="35" :showDetail="false"></Avatar>
       </div>
       <div class="menu-list">
         <template v-for="item in menuList" :key="item.name">

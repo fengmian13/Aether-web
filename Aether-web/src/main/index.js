@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover, onAddChatSession, onOpenNewWindow, onSaveAs, onSaveClipBoardFile } from './ipc'
+import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover, onSaveAvatar2Local, onAddChatSession, onOpenNewWindow, onSaveAs, onSaveClipBoardFile } from './ipc'
 import { createTable } from './db/ADB'
 import { saveWindow } from './windowProxy'
 
@@ -158,6 +158,8 @@ function createWindow() {
   OnSetSessionSelect();
 
   onCreateCover();
+
+  onSaveAvatar2Local();
 
   onAddChatSession();
 

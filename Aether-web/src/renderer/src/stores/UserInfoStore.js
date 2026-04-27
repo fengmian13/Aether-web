@@ -7,11 +7,12 @@ export const useUserInfoStore = defineStore('userInfo',{
     }},
     actions: { 
         setUserInfo(userInfo) {
-          this.userInfo = userInfo;
-          localStorage.setItem("userInfo", JSON.stringify(userInfo));
+          const safeUserInfo = userInfo && typeof userInfo === 'object' ? userInfo : {};
+          this.userInfo = safeUserInfo;
+          localStorage.setItem("userInfo", JSON.stringify(safeUserInfo));
         },
         getUserInfo() {
-          return this.userInfo;
+          return this.userInfo || {};
         },
     },
 });

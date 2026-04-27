@@ -9,7 +9,7 @@ import { initWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local, createCover, saveAs, saveClipBoardFile } from './file'
+import { saveFile2Local, createCover, saveAvatar2Local, saveAs, saveClipBoardFile } from './file'
 import { saveWindow, getWindow, delWindow, windowManage } from './windowProxy'
 
 // 登录或注册
@@ -135,6 +135,13 @@ const onCreateCover = () => {
   });
 };
 
+const onSaveAvatar2Local = () => {
+  ipcMain.on("saveAvatar2Local", async (e, data) => {
+    await saveAvatar2Local(data);
+    e.sender.send("saveAvatar2LocalCallback", { success: true, userId: data.userId });
+  });
+}
+
 const onOpenNewWindow = () => {
   ipcMain.on("newWindow", (e, config) => {
     openWindow(config);
@@ -230,6 +237,7 @@ export {
   onAddlocalMessage,
   OnSetSessionSelect,
   onCreateCover,
+  onSaveAvatar2Local,
   onAddChatSession,
   onOpenNewWindow,
   onSaveAs,

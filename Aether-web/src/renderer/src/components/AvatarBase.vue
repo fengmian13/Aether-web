@@ -1,13 +1,19 @@
 <template>
   <div class="user-avatar" :style="{ width: width + 'px', height: width + 'px', 'border-radius': borderRadius + 'px' }"
     @click="showDetailHandler">
-    <ShowLocalImage :width="width" :fileId="userId" partType="avatar" :forceGet="avatarInfoStore.getFoceReload(userId)">
+    <ShowLocalImage
+      :key="`${userId}-${avatarInfoStore.getFoceReload(userId) ?? 0}`"
+      :width="width"
+      :fileId="userId"
+      partType="avatar"
+      :forceGet="false"
+    >
     </ShowLocalImage>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, onMounted, onUnmounted } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useAvatarInfoStore } from '@/stores/AvatarUpdateStore'
 const avatarInfoStore = useAvatarInfoStore()
@@ -54,6 +60,21 @@ const showDetailHandler = () => {
     }
   })
 }
+
+const reloadAvatarHandler = (e, fileId) => {
+  if (fileId !== props.userId) {
+    return
+  }
+  avatarInfoStore.setFoceReload(props.userId, false)
+}
+
+onMounted(() => {
+  window.ipcRenderer.on('reloadAvatar', reloadAvatarHandler)
+})
+
+onUnmounted(() => {
+  window.ipcRenderer.removeListener('reloadAvatar', reloadAvatarHandler)
+})
 </script>
 
 <style lang="scss" scoped>
