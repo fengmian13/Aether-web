@@ -33,15 +33,15 @@
           <tr v-for="item in list" :key="item.applyUserId">
             <td>
               <div class="user-profile">
-                <div class="avatar-placeholder">{{ item.applyUserNickName.charAt(0) }}</div>
+                <div class="avatar-placeholder">{{ (item.contactName || item.applyUserId).charAt(0) }}</div>
                 <div class="user-info">
-                  <span class="nickname">{{ item.applyUserNickName }}</span>
+                  <span class="nickname">{{ item.contactName || item.applyUserId }}</span>
                   <span class="user-id-sub">ID: {{ item.applyUserId }}</span>
                 </div>
               </div>
             </td>
             <td class="apply-info">{{ item.applyInfo || '请求添加你为好友' }}</td>
-            <td class="time-col">{{ formatDate(item.applyTime) }}</td>
+            <td class="time-col">{{ formatDate(item.lastApplyTime) }}</td>
             <td>
               <span :class="['status-tag', getStatusClass(item.status)]">
                 {{ getStatusText(item.status) }}
@@ -73,9 +73,9 @@
 
         <div class="modal-body" v-if="currentApply">
           <div class="modal-user-card">
-            <div class="modal-avatar">{{ currentApply.applyUserNickName.charAt(0) }}</div>
+            <div class="modal-avatar">{{ (currentApply.contactName || currentApply.applyUserId).charAt(0) }}</div>
             <div class="modal-user-details">
-              <div class="modal-name">{{ currentApply.applyUserNickName }}</div>
+              <div class="modal-name">{{ currentApply.contactName || currentApply.applyUserId }}</div>
               <div class="modal-id">ID: {{ currentApply.applyUserId }}</div>
             </div>
           </div>
@@ -86,7 +86,7 @@
           </div>
           <div class="info-row">
             <label>申请时间：</label>
-            <div class="info-content">{{ formatDate(currentApply.applyTime) }}</div>
+            <div class="info-content">{{ formatDate(currentApply.lastApplyTime) }}</div>
           </div>
         </div>
 
@@ -168,23 +168,33 @@ const fetchContactApplyList = async () => {
   error.value = null
   try {
     let result = await proxy.Request({
-      url: proxy.Api.contactNotice,
+      url: proxy.Api.contactNotice, // 确保这里对应的接口地址正确，根据你的描述可能是 userContact/loadContactApply
       params: {
         pageNo: 1
       }
     })
+
     if (!result) return
 
-    if (result.data && Array.isArray(result.data)) {
-      list.value = result.data
-    } else if (result.data?.data && Array.isArray(result.data.data)) {
-      list.value = result.data.data
+    // 1. 修正数据提取路径：根据返回结构，数组在 result.data.list 中
+    let dataList = []
+    if (result.data?.list && Array.isArray(result.data.list)) {
+      dataList = result.data.list
+    } else if (result.data?.data?.list && Array.isArray(result.data.data.list)) {
+      // 兼容可能的嵌套结构
+      dataList = result.data.data.list
     } else {
-      list.value = []
+      dataList = []
     }
-    // 按时间降序排序
+
+    list.value = dataList
+
+    // 2. 修正排序字段：使用接口返回的 lastApplyTime 而不是 applyTime
     list.value.sort((a, b) => {
-      return b.applyTime - a.applyTime
+      // 确保时间字段存在，默认值为0防止报错
+      const timeA = a.lastApplyTime || 0
+      const timeB = b.lastApplyTime || 0
+      return timeB - timeA // 降序排列
     })
   } catch (err) {
     console.error('获取联系人申请失败:', err)
