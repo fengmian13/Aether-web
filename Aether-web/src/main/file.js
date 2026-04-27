@@ -2,7 +2,7 @@ const fs = require('fs');
 const fse = require('fs-extra');
 const NODE_ENV = process.env.NODE_ENV;
 const path = require('path');
-const { app, ipcMain, shell, BrowserWindow } = require('electron');
+const { app, ipcMain, shell } = require('electron');
 const { exec } = require("child_process");
 const FormData = require('form-data'); // 引入FormData模块（用于构建表单数据）
 const axios = require('axios'); // 引入axios库
@@ -10,6 +10,7 @@ const { dialog } = require('electron')
 import store from "./store";
 const moment = require('moment');
 moment.locale('zh-cn', {});
+import { getWindow } from './windowProxy'
 
 //express 服务器
 const express = require('express')
@@ -212,7 +213,6 @@ const FILE_TYPE_CONTENT_TYPE = {
 }
 
 expressServer.get('/file', async (req, res) => {
-    try {
     let { partType, fileType, fileId, showCover, forceGet } = req.query;
     //console.log("getFile", partType, fileType, fileId, showCover, forceGet);
     if (!partType || !fileId) {
@@ -227,8 +227,8 @@ expressServer.get('/file', async (req, res) => {
 
     //console.log("获取图片", new Date().getTime(), fileId, forceGet, partType);
     if (forceGet == "true" && partType == "avatar") {
-        const mainWindow = BrowserWindow.getAllWindows().find((win) => !win.isDestroyed());
-        if (mainWindow) {
+        const mainWindow = getWindow("main");
+        if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send("reloadAvatar", fileId);
         }
     }
@@ -277,48 +277,8 @@ expressServer.get('/file', async (req, res) => {
         res.writeHead(200, head);
         fs.createReadStream(localPath).pipe(res);
     }
-    } catch (error) {
-        console.error("get /file failed:", error);
-        if (!res.headersSent) {
-            res.status(500).send("file service error");
-        }
-    }
 })
 
-//从服务器下载文件
-// const downloadFile = (fileId, showCover, savePath, partType) => {
-//     showCover = showCover + "";
-//     let url = `${getDomain()}/api/chat/downloadFile`
-//     const token = store.getUserData('token');
-//     console.log(token)
-//     return new Promise(async (resolve, reject) => {
-//         const config = {
-//             responseType: "stream",
-//             headers: { 'Content-Type': 'multipart/form-data', 'token': token }
-//         }
-//         let response = await axios.post(url, {
-//             fileId,
-//             showCover
-//         }, config);
-//         const folder = path.dirname(savePath);
-//         mkdirs(folder);
-//         const stream = fs.createWriteStream(savePath);
-//         if (response.headers['content-type'] == "application/json") {
-//             let resourcesPath = getResourcesPath();
-//             if (partType == "avatar") {
-//                 fs.createReadStream(resourcesPath + "/assets/user.png").pipe(stream);
-//             } else {
-//                 fs.createReadStream(resourcesPath + "/assets/404.png").pipe(stream);
-//             }
-//         } else {
-//             response.data.pipe(stream);
-//         }
-//         stream.on("finish", () => {
-//             stream.close();
-//             resolve();
-//         })
-//     })
-// }
 const downloadFile = (fileId, showCover, savePath, partType) => {
     showCover = showCover + "";
     let url = `${getDomain()}/api/chat/downloadFile`
