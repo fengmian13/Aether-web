@@ -27,8 +27,8 @@
         <el-form-item prop="sex" v-if="!isLogin" label="性别">
           <el-select v-model="formData.sex" placeholder="请选择性别" style="width: 100%">
             <el-option :value="1" label="男" />
-            <el-option :value="2" label="女" />
-            <el-option :value="0" label="保密" />
+            <el-option :value="0" label="女" />
+            <el-option :value="2" label="未知" />
           </el-select>
         </el-form-item>
         <el-form-item prop="password">
