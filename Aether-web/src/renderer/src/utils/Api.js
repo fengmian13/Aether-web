@@ -14,9 +14,9 @@ const api = {
     loadMyGroup: "/group/loadMyGroup",//我创建的群组
     saveGroup: "/group/saveGroup",//保存群组TODO
     getGroupInfo: "/group/getGroupInfo",
-    uploadImage: "/file/uploadImage",//上传图片TODO
-    addContact2BlackList: "/userContact/addContact2BlackList",//加入黑名单TODO
-    delContact: "/userContact/delContact",//删除联系人TODO
+    uploadImage: "/file/uploadImage",//上传图片
+    addContact2BlackList: "/userContact/addContact2BlackList",//加入黑名单
+    delContact: "/userContact/delContact",//删除联系人
     getUserInfoByUserId: "/userInfo/getUserInfoByUserId",//获取用户信息
     getUserInfo: "/userInfo/getUserInfo",//获取用户信息
     dissolutionGroup: "/group/dissolutionGroup",//解散群组

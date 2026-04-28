@@ -101,6 +101,24 @@ const sendMessage = (e) => {
 }
 
 const emit = defineEmits(['sendMessage4Local'])
+
+const handleSendMessageError = (responseData) => {
+  const message = responseData.code == 600
+    ? (responseData.info || '对方已将你拉黑，无法发送消息')
+    : responseData.info
+  proxy.Confirm({
+    message,
+    showCancelBtn: false
+  })
+  // proxy.Confirm({
+  //   message,
+  //   okfun: () => {
+  //     addContact(props.currentChatSession.contactId, responseData.code)
+  //   },
+  //   okText: '重新申请'
+  // })
+}
+
 //真正的发送消息
 const sendMessageDo = async (messageObj = {
   messageContent,
@@ -141,15 +159,7 @@ const sendMessageDo = async (messageObj = {
       Suffix: messageObj.Suffix
     },
     showError: false,
-    errorCallBack: (responseData) => {
-      proxy.Confirm({
-        message: responseData.info,
-        okfun: () => {
-          addContact(props.currentChatSession.contactId, responseData.code)
-        },
-        okText: '重新申请'
-      })
-    }
+    errorCallback: handleSendMessageError
   })
   if (!result) {
     return;

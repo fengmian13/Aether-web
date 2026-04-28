@@ -10,7 +10,7 @@
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="addContact2BlackList">加入黑名单</el-dropdown-item>
-              <el-dropdown-item @click="deleteContact">删除联系人</el-dropdown-item>
+              <el-dropdown-item @click="delContact">删除联系人</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -45,6 +45,11 @@ const router = useRouter()
 import { userContactStateStore } from '@/stores/ContactStateStore'
 const contactStateStore = userContactStateStore()
 
+const CONTACT_STATUS = {
+  DELETE: 2,
+  BLACKLIST: 3
+}
+
 const userInfo = ref({})
 const loadUserDetail = async (contactId) => {
   let result = await proxy.Request({
@@ -59,21 +64,27 @@ const loadUserDetail = async (contactId) => {
   userInfo.value = result.data
 }
 
+const handleContactOperate = async (url, status) => {
+  const result = await proxy.Request({
+    url,
+    params: {
+      contactId: userInfo.value.userId,
+      status
+    }
+  })
+  if (!result) {
+    return false
+  }
+  delContactData()
+  return true
+}
+
 //加入黑名单
 const addContact2BlackList = async () => {
   proxy.Confirm({
     message: '确定将此用户加入黑名单吗？',
     okfun: async () => {
-      let result = await proxy.Request({
-        url: proxy.Api.addContact2BlackList,
-        params: {
-          contactId: userInfo.value.userId
-        }
-      })
-      if (!result) {
-        return
-      }
-      delContactData()
+      await handleContactOperate(proxy.Api.addContact2BlackList, CONTACT_STATUS.BLACKLIST)
     }
   })
 }
@@ -82,21 +93,13 @@ const delContact = () => {
   proxy.Confirm({
     message: '确定删除此好友吗？',
     okfun: async () => {
-      let result = await proxy.Request({
-        url: proxy.Api.delContact,
-        params: {
-          contactId: userInfo.value.userId
-        }
-      })
-      if (!result) {
-        return
-      }
-      delContactData()
+      await handleContactOperate(proxy.Api.delContact, CONTACT_STATUS.DELETE)
     }
   })
 }
 
 const delContactData = () => {
+  window.ipcRenderer.send('delChatSession', userInfo.value.userId)
   contactStateStore.setContactReload('REMOVE_USER')
 }
 
