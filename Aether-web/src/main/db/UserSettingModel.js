@@ -11,7 +11,15 @@ import {
 import store from "../store"
 import { startLocalServer } from "../file";
 const os = require("os");
+const path = require("path");
 const userDir = os.homedir();
+
+const ensureTrailingSeparator = (folderPath) => {
+    if (!folderPath) {
+        return folderPath;
+    }
+    return folderPath.endsWith(path.sep) ? folderPath : folderPath + path.sep;
+}
 
 const updateContactNoReadCount = ({ userId, noReadCount }) => {
     return new Promise(async (resolve, reject) => {
@@ -41,17 +49,18 @@ const addUserSetting = async (userId, email) => {
         serverPort++;
     }
     const sysSetting = {
-        localFileFolder: userDir + "\\.Anther\\fileStorage\\"
+        localFileFolder: ensureTrailingSeparator(path.join(userDir, ".Anther", "fileStorage"))
     }
     sql = "select * from user_setting where user_id = ?"
     const userInfo = await queryOne(sql, [userId]);
 
     let resultServerPort = null;
-    let localFileFolder = sysSetting.localFileFolder + userId;
+    let localFileFolder = path.join(sysSetting.localFileFolder, String(userId));
     if (userInfo) {
         await update("user_setting", { "email": email }, { "userId": userId })
         resultServerPort = userInfo.serverPort;
-        localFileFolder = JSON.parse(userInfo.sysSetting).localFileFolder + userId;
+        const userSysSetting = JSON.parse(userInfo.sysSetting);
+        localFileFolder = path.join(userSysSetting.localFileFolder, String(userId));
     } else {
         await insertOrIgnore("user_setting", {
             userId: userId,
@@ -68,7 +77,45 @@ const addUserSetting = async (userId, email) => {
     store.setUserData("localFileFolder", localFileFolder);
 }
 
+const getCurrentUserSetting = async () => {
+    const userId = store.getUserId();
+    if (!userId) {
+        return null;
+    }
+    const sql = "select * from user_setting where user_id = ?"
+    const userInfo = await queryOne(sql, [userId]);
+    if (!userInfo) {
+        return null;
+    }
+    const sysSetting = userInfo.sysSetting ? JSON.parse(userInfo.sysSetting) : {};
+    const currentFolder = path.join(sysSetting.localFileFolder || "", String(userId));
+    return {
+        ...userInfo,
+        sysSetting,
+        currentFolder
+    }
+}
+
+const updateCurrentUserFileFolder = async (baseFolder) => {
+    const userId = store.getUserId();
+    if (!userId || !baseFolder) {
+        return null;
+    }
+    const userInfo = await getCurrentUserSetting();
+    const sysSetting = userInfo?.sysSetting || {};
+    sysSetting.localFileFolder = ensureTrailingSeparator(baseFolder);
+    await update("user_setting", { sysSetting: JSON.stringify(sysSetting) }, { userId });
+    const currentFolder = path.join(sysSetting.localFileFolder, String(userId));
+    store.setUserData("localFileFolder", currentFolder);
+    return {
+        sysSetting,
+        currentFolder
+    };
+}
+
 export {
     updateContactNoReadCount,
-    addUserSetting
+    addUserSetting,
+    getCurrentUserSetting,
+    updateCurrentUserFileFolder
 }

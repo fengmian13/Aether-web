@@ -4,12 +4,11 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 import store from './store'
-import { log } from 'console'
 import { initWs, closeWs } from './wsClient'
-import { addUserSetting } from './db/UserSettingModel'
+import { addUserSetting, getCurrentUserSetting, updateCurrentUserFileFolder } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local, createCover, saveAvatar2Local, saveAs, saveClipBoardFile, closeLocalServer } from './file'
+import { saveFile2Local, createCover, saveAvatar2Local, saveAs, saveClipBoardFile, closeLocalServer, selectLocalFolder, openLocalFolder } from './file'
 import { saveWindow, getWindow, delWindow, windowManage } from './windowProxy'
 
 // 登录或注册
@@ -178,6 +177,39 @@ const onSaveClipBoardFile = () => {
   });
 }
 
+const onGetFileManageInfo = () => {
+  ipcMain.on("getFileManageInfo", async (e) => {
+    const result = await getCurrentUserSetting();
+    e.sender.send("getFileManageInfoCallback", result);
+  });
+}
+
+const onChangeLocalFolder = () => {
+  ipcMain.on("changeLocalFolder", async (e) => {
+    const selectedFolder = await selectLocalFolder();
+    if (!selectedFolder) {
+      e.sender.send("changeLocalFolderCallback", { canceled: true });
+      return;
+    }
+    const result = await updateCurrentUserFileFolder(selectedFolder);
+    e.sender.send("changeLocalFolderCallback", {
+      canceled: false,
+      ...result
+    });
+  });
+}
+
+const onOpenLocalFolder = () => {
+  ipcMain.on("openLocalFolder", async (e) => {
+    const setting = await getCurrentUserSetting();
+    const errorMessage = await openLocalFolder(setting?.currentFolder);
+    e.sender.send("openLocalFolderCallback", {
+      success: !errorMessage,
+      errorMessage
+    });
+  });
+}
+
 const openWindow = ({ windowId, title = "Ather", path, width = 960, height = 720, data }) => {
   const localServerPort = store.getUserData("localServerPort");
   data.localServerPort = localServerPort;
@@ -257,5 +289,8 @@ export {
   onOpenNewWindow,
   onSaveAs,
   onSaveClipBoardFile,
-  onReLogin
+  onReLogin,
+  onGetFileManageInfo,
+  onChangeLocalFolder,
+  onOpenLocalFolder
 }

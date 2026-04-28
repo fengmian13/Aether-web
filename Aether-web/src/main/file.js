@@ -410,6 +410,25 @@ const saveClipBoardFile = async (file) => {
     };
 }
 
+const selectLocalFolder = async () => {
+    const result = await dialog.showOpenDialog({
+        title: "选择文件保存目录",
+        properties: ["openDirectory", "createDirectory"]
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+        return null;
+    }
+    return result.filePaths[0];
+}
+
+const openLocalFolder = async (folderPath) => {
+    if (!folderPath) {
+        return "未找到文件目录";
+    }
+    mkdirs(folderPath);
+    return await shell.openPath(folderPath);
+}
+
 export {
     saveFile2Local,
     startLocalServer,
@@ -417,5 +436,7 @@ export {
     createCover,
     saveAvatar2Local,
     saveAs,
-    saveClipBoardFile
+    saveClipBoardFile,
+    selectLocalFolder,
+    openLocalFolder
 }

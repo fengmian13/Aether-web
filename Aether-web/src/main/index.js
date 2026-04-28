@@ -9,7 +9,8 @@ import {
   onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession,
   onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover,
   onSaveAvatar2Local, onAddChatSession, onOpenNewWindow, onSaveAs,
-  onSaveClipBoardFile, onReLogin
+  onSaveClipBoardFile, onReLogin, onGetFileManageInfo, onChangeLocalFolder,
+  onOpenLocalFolder
 } from './ipc'
 import { createTable } from './db/ADB'
 import { saveWindow } from './windowProxy'
@@ -183,6 +184,12 @@ function createWindow() {
   onSaveAs();
 
   onSaveClipBoardFile();
+
+  onGetFileManageInfo();
+
+  onChangeLocalFolder();
+
+  onOpenLocalFolder();
 }
 
 // This method will be called when Electron has finished
