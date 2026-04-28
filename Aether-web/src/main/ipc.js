@@ -5,11 +5,11 @@ import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 import store from './store'
 import { log } from 'console'
-import { initWs } from './wsClient'
+import { initWs, closeWs } from './wsClient'
 import { addUserSetting } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
-import { saveFile2Local, createCover, saveAvatar2Local, saveAs, saveClipBoardFile } from './file'
+import { saveFile2Local, createCover, saveAvatar2Local, saveAs, saveClipBoardFile, closeLocalServer } from './file'
 import { saveWindow, getWindow, delWindow, windowManage } from './windowProxy'
 
 // 登录或注册
@@ -59,6 +59,21 @@ const onGetLocalStore = () => {
   ipcMain.on("getLocalStore", (e, key) => {
     console.log("收到渲染进程的获取事件key：", key);
     e.sender.send("getLocalStoreCallback", store.getData(key));
+  })
+}
+
+//重新登录
+const onReLogin = (callback) => {
+  ipcMain.on("reLogin", (e, data) => {
+    for (let win in windowManage) {
+      if (win !== "main") {
+        windowManage[win].close();
+      }
+    }
+    callback();
+    e.sender.send("reLogin")
+    closeWs();
+    closeLocalServer();
   })
 }
 
@@ -241,5 +256,6 @@ export {
   onAddChatSession,
   onOpenNewWindow,
   onSaveAs,
-  onSaveClipBoardFile
+  onSaveClipBoardFile,
+  onReLogin
 }

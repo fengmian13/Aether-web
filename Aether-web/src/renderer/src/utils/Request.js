@@ -51,7 +51,7 @@ instance.interceptors.response.use(
       return responseData
     } else if (responseData.code == 901) {
       setTimeout(() => {
-        window.ipcRenderer.send('/reLogin')
+        window.ipcRenderer.send('reLogin')
       }, 2000)
       return Promise.reject({ showError: true, msg: '登录超时' })
     } else {

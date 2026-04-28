@@ -4,7 +4,13 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 
-import { onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore, onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession, onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover, onSaveAvatar2Local, onAddChatSession, onOpenNewWindow, onSaveAs, onSaveClipBoardFile } from './ipc'
+import {
+  onLoginOrRegister, onLoginSuccess, winTitleOp, onSetLocalStore,
+  onGetLocalStore, onLoadSessionData, onDelChatSession, onTopChatSession,
+  onLoadChatMessage, onAddlocalMessage, OnSetSessionSelect, onCreateCover,
+  onSaveAvatar2Local, onAddChatSession, onOpenNewWindow, onSaveAs,
+  onSaveClipBoardFile, onReLogin
+} from './ipc'
 import { createTable } from './db/ADB'
 import { saveWindow } from './windowProxy'
 
@@ -140,6 +146,15 @@ function createWindow() {
       }
     }
   });
+
+  onReLogin(() => {
+    mainWindow.setResizable(true);
+    //上面设置了最小窗口大小，所这里需要重新设置窗口大小，否则无法修改大小
+    mainWindow.setMinimumSize(login_width, login_height);
+    mainWindow.setSize(login_width, login_height);
+    mainWindow.center();
+    mainWindow.setResizable(false);
+  })
 
   onSetLocalStore();
 

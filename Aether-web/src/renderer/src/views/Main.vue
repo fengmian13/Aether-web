@@ -102,6 +102,14 @@ const getSysSetting = async () => {
 onMounted(() => {
   getLoginInfo()
   getSysSetting()
+
+  window.ipcRenderer.on('reLogin', (e, info) => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('userInfo')
+    userInfoStore.setUserInfo({})
+    router.push('/login')
+  })
+
   window.ipcRenderer.on("getLocalStoreCallback", (e, serverPort) => {
     globalInfoStore.setInfo("localServerPort", serverPort);
   });

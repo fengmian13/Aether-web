@@ -43,6 +43,7 @@
 <script setup>
 import { ref, reactive, getCurrentInstance, nextTick, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useUserInfoStore } from '@/stores/UserInfoStore'
 import UserInfoEdit from './UserInfoEdit.vue'
 import UserInfoPassword from './UserInfoPassword.vue'
 import UserBaseInfo from '../../components/UserBaseInfo.vue'
@@ -50,6 +51,7 @@ import UserBaseInfo from '../../components/UserBaseInfo.vue'
 const { proxy } = getCurrentInstance()
 const route = useRoute()
 const router = useRouter()
+const userInfoStore = useUserInfoStore()
 
 const userInfo = ref({})
 
@@ -79,9 +81,18 @@ const logout = () => {
   // proxy.Confirm({
   //   message: '确定要退出登录吗？',
   //   okfun: async () => {
-  //     window.ipcRenderer.send('reLogin')
+  //     localStorage.removeItem('token')
+  //     localStorage.removeItem('userInfo')
+  //     userInfoStore.setUserInfo({})
+  //     router.replace('/login')
   //   }
   // })
+  proxy.Confirm({
+    message: '确定要退出登录吗？',
+    okfun: async () => {
+      window.ipcRenderer.send('reLogin')
+    }
+  })
 }
 </script>
 
@@ -89,32 +100,39 @@ const logout = () => {
 .show-info {
   .user-info {
     position: relative;
+
     .more-op {
       position: absolute;
       top: 20px;
       right: 20px;
+
       .icon-more {
         color: #9e9e9e;
+
         &:hover {
           background: #dddddd;
         }
       }
     }
   }
+
   .part-item {
     display: flex;
     border-bottom: 1px solid #eaeaea;
     padding: 20px 0px;
+
     .part-title {
       width: 60px;
       color: #9e9e9e;
     }
+
     .part-content {
       flex: 1;
       margin-left: 15px;
       color: #161616;
     }
   }
+
   .logout {
     text-align: center;
     margin-top: 20px;
