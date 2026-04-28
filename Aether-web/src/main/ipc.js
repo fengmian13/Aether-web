@@ -4,7 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 const NODE_ENV = process.env.NODE_ENV
 import store from './store'
-import { initWs, closeWs } from './wsClient'
+import { initWs, closeWs, sendWsMessage, isWsConnected } from './wsClient'
 import { addUserSetting, getCurrentUserSetting, updateCurrentUserFileFolder } from './db/UserSettingModel'
 import { selectUserSessionList, delChatSession, topChatSession, updateSessionInfo4Message, readAll, addChatSession, saveOrUpdate4Message } from './db/ChatSessionUserModel'
 import { saveMessage, selectMessageList, updateMessage } from './db/ChatMessageModel'
@@ -171,9 +171,18 @@ const onSaveAs = () => {
 //读取剪切板内容
 const onSaveClipBoardFile = () => {
   ipcMain.on("saveClipBoardFile", async (e, file) => {
-    const result = await saveClipBoardFile(file);
-    console.log("result", result);
-    e.sender.send("saveClipBoardFileCallback", result);
+    try {
+      const result = await saveClipBoardFile(file);
+      e.sender.send("saveClipBoardFileCallback", {
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      e.sender.send("saveClipBoardFileCallback", {
+        success: false,
+        errorMessage: error?.message || "Failed to save clipboard image"
+      });
+    }
   });
 }
 
@@ -208,6 +217,28 @@ const onOpenLocalFolder = () => {
       errorMessage
     });
   });
+}
+
+const onCallSendSignal = () => {
+  ipcMain.handle('call:sendSignal', async (e, signal) => {
+    try {
+      if (!isWsConnected()) {
+        return {
+          success: false,
+          errorMessage: 'WebSocket not connected'
+        }
+      }
+      sendWsMessage(signal)
+      return {
+        success: true
+      }
+    } catch (error) {
+      return {
+        success: false,
+        errorMessage: error?.message || 'Failed to send call signal'
+      }
+    }
+  })
 }
 
 const openWindow = ({ windowId, title = "Ather", path, width = 960, height = 720, data }) => {
@@ -292,5 +323,6 @@ export {
   onReLogin,
   onGetFileManageInfo,
   onChangeLocalFolder,
-  onOpenLocalFolder
+  onOpenLocalFolder,
+  onCallSendSignal
 }

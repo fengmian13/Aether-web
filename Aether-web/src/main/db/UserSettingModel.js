@@ -29,11 +29,11 @@ const updateContactNoReadCount = ({ userId, noReadCount }) => {
             return;
         }
         if (noReadCount) {
-            sql = "update user_setting set contact_no_read_count = contact_no_read_count+? where user_id = ?";
+            sql = "update user_setting set contact_no_read = contact_no_read+? where user_id = ?";
         } else {
             //清空未读数
             noReadCount = 0;
-            sql = "update user_setting set contact_no_read_count = ? where user_id = ?";
+            sql = "update user_setting set contact_no_read = ? where user_id = ?";
         }
         await run(sql, [noReadCount, userId]);
         resolve();

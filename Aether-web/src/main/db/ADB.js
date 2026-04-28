@@ -181,6 +181,7 @@ const init = () => {
 }
 init();
 export {
+  createTable,
   run,
   queryOne,
   queryCount,

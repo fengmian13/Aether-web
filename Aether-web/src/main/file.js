@@ -398,7 +398,11 @@ const saveAvatar2Local = async ({ userId, avatarByteArray, coverByteArray }) => 
 
 //保存剪切板内容
 const saveClipBoardFile = async (file) => {
-    const fileSuffix = file.name.substring(file.name.lastIndexOf("."));
+    if (!file?.byteArray?.length) {
+        throw new Error("Clipboard image is empty");
+    }
+    const dotIndex = file.name?.lastIndexOf(".") ?? -1;
+    const fileSuffix = dotIndex > -1 ? file.name.substring(dotIndex) : ".png";
     const filePath = await getLocalFilePath("tmp", false, "tmp" + fileSuffix);
     let byteArray = file.byteArray;
     const buffer = Buffer.from(byteArray);

@@ -1,11 +1,18 @@
 <template>
   <div class="send-panel">
     <div class="toolbar">
-      <el-popover :visible="showEmojiPopover" trigger="click" placement="top" :teleported="false" @show="openPopover"
-        @hide="closePopover" :popper-style="{
+      <el-popover
+        :visible="showEmojiPopover"
+        trigger="click"
+        placement="top"
+        :teleported="false"
+        @show="openPopover"
+        @hide="closePopover"
+        :popper-style="{
           padding: '0px 10px 10px 10px',
           width: '490px'
-        }">
+        }"
+      >
         <template #default>
           <el-tabs v-model="activeEmoji" @click.stop>
             <el-tab-pane :label="emoji.name" :name="emoji.name" v-for="emoji in emojiList" :key="emoji.name">
@@ -22,49 +29,84 @@
           <div class="iconfont icon-emoji" @click="showEmojiPopoverHandler"></div>
         </template>
       </el-popover>
-      <el-upload ref="uploadRef" name="file" :show-file-list="false" :multiple="true" :limit="fileLimit"
-        :http-request="uploadFile" :on-exceed="uploadExceed">
+
+      <el-upload
+        ref="uploadRef"
+        name="file"
+        :show-file-list="false"
+        :multiple="true"
+        :limit="fileLimit"
+        :http-request="uploadFile"
+        :on-exceed="uploadExceed"
+      >
         <div class="iconfont icon-folder"></div>
       </el-upload>
+
+      <el-dropdown v-if="props.currentChatSession.contactType == 0" trigger="click" class="call-dropdown">
+        <span class="call-entry">通话</span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="startCall('video')">视频聊天</el-dropdown-item>
+            <el-dropdown-item @click="startCall('voice')">语音聊天</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
+
     <div class="input-area" @drop="dropHandler" @dragover="dragOverHandler">
-      <el-input rows="5" v-model="msgContent" type="textarea" resize="none" maxlength="500" show-word-limit
-        spellcheck="false" input-style="background:#f5f5f5;border:none;" @keydown.enter="sendMessage"
-        @paste="pasteFile" />
+      <el-input
+        rows="5"
+        v-model="msgContent"
+        type="textarea"
+        resize="none"
+        maxlength="500"
+        show-word-limit
+        spellcheck="false"
+        input-style="background:#f5f5f5;border:none;"
+        @keydown.enter="sendMessage"
+        @paste="pasteFile"
+      />
     </div>
+
     <div class="send-btn-panel">
-      <el-popover trigger="click" :visible="showSendMsgPopover" :hide-after="1500" placement="top-end"
-        :teleported="false" @show="openPopover" @hide="closePopover" :popper-style="{
+      <el-popover
+        trigger="click"
+        :visible="showSendMsgPopover"
+        :hide-after="1500"
+        placement="top-end"
+        :teleported="false"
+        @show="openPopover"
+        @hide="closePopover"
+        :popper-style="{
           padding: '5px',
           'min-width': '0px',
           width: '120px'
-        }">
+        }"
+      >
         <template #default>
           <span class="empty-msg">不能发送空白信息</span>
         </template>
 
         <template #reference>
-          <span class="send-btn" @click="sendMessage">发送 (S)</span>
+          <span class="send-btn" @click="sendMessage">发送(S)</span>
         </template>
       </el-popover>
     </div>
-    <!-- 加好友 -->
+
     <SearchAdd ref="searchAddRef"></SearchAdd>
   </div>
 </template>
 
 <script setup>
 import emojiList from '@/utils/Emoji.js'
-import { getFileType } from '@/utils/Constants.js';
+import { getFileType } from '@/utils/Constants.js'
+import { startOutgoingCall } from '@/services/call/callService'
 import SearchAdd from '@/Views/contact/SearchAdd.vue'
-import { ref, reactive, getCurrentInstance, nextTick, onMounted, onUnmounted } from "vue"
-const { proxy } = getCurrentInstance();
-import { useRoute, useRouter } from 'vue-router'
+import { ref, getCurrentInstance, onMounted, onUnmounted } from 'vue'
+const { proxy } = getCurrentInstance()
 
 import { useSysSettingStore } from '@/stores/SysSettingStore'
 const sysSettingStore = useSysSettingStore()
-const route = useRoute()
-const router = useRouter()
 
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 const userInfoStore = useUserInfoStore()
@@ -76,78 +118,77 @@ const props = defineProps({
   }
 })
 
-
+const activeEmoji = ref('')
 const msgContent = ref('')
 const showEmojiPopover = ref(false)
 const showSendMsgPopover = ref(false)
+
+const emit = defineEmits(['sendMessage4Local'])
+
 const hidePopover = () => {
   showEmojiPopover.value = false
   showSendMsgPopover.value = false
 }
+
 const sendMessage = (e) => {
-  if (e.shifkKey && e.keyCode === 13) {
+  if (e?.shiftKey && e.keyCode === 13) {
     return
   }
-  e.preventDefault()
+  e?.preventDefault()
 
   const messageContent = msgContent.value ? msgContent.value.replace(/\s*$/g, '') : ''
-  if (messageContent == "") {
-    showSendMsgPopover.value = true;
-    return;
+  if (messageContent === '') {
+    showSendMsgPopover.value = true
+    return
   }
-  sendMessageDo({
-    messageContent, messageType: 2
-  }, true);
+  sendMessageDo(
+    {
+      messageContent,
+      messageType: 2
+    },
+    true
+  )
 }
 
-const emit = defineEmits(['sendMessage4Local'])
-
 const handleSendMessageError = (responseData) => {
-  const message = responseData.code == 600
-    ? (responseData.info || '对方已将你拉黑，无法发送消息')
-    : responseData.info
+  const message =
+    responseData.code == 600 ? responseData.info || '对方已将你拉黑，无法发送消息' : responseData.info
   proxy.Confirm({
     message,
     showCancelBtn: false
   })
-  // proxy.Confirm({
-  //   message,
-  //   okfun: () => {
-  //     addContact(props.currentChatSession.contactId, responseData.code)
-  //   },
-  //   okText: '重新申请'
-  // })
 }
 
-//真正的发送消息
-const sendMessageDo = async (messageObj = {
-  messageContent,
-  messageType,
-  localFilePath,
-  fileSize,
-  fileName,
-  filePath,
-  Suffix
-}, cleanMsgContent) => {
-  //NOTE 判断文件大小
+const sendMessageDo = async (
+  messageObj = {
+    messageContent,
+    messageType,
+    localFilePath,
+    fileSize,
+    fileName,
+    filePath,
+    Suffix
+  },
+  cleanMsgContent
+) => {
   if (!checkFileSize(messageObj.fileType, messageObj.fileSize, messageObj.fileName)) {
     return
   }
 
   if (messageObj.fileSize == 0) {
     proxy.Confirm({
-      message: `${messageObj.fileName}是一个空文件无法发送，请重新选择`,
+      message: `${messageObj.fileName} 是空文件，无法发送，请重新选择`,
       showCancelBtn: false
     })
     return
   }
-  console.log(messageObj.messageType)
-  messageObj.sessionId = props.currentChatSession.sessionId;
-  messageObj.sendUserId = userInfoStore.getUserInfo().userId;
-  messageObj.contactId = props.currentChatSession.contactId;
-  messageObj.lastMessage = messageObj.messageContent;
 
-  let result = await proxy.Request({
+  messageObj.sessionId = props.currentChatSession.sessionId
+  messageObj.sendUserId = userInfoStore.getUserInfo().userId
+  messageObj.contactId = props.currentChatSession.contactId
+  messageObj.lastMessage = messageObj.messageContent
+
+  const result = await proxy.Request({
     url: proxy.Api.sendMessage,
     showLoading: false,
     params: {
@@ -162,43 +203,39 @@ const sendMessageDo = async (messageObj = {
     errorCallback: handleSendMessageError
   })
   if (!result) {
-    return;
+    return
   }
   if (cleanMsgContent) {
     msgContent.value = ''
   }
 
-  // 保存本地原始字段，服务端可能不返回这些
-  const origContent = messageObj.messageContent;
-  const origType = messageObj.messageType;
-  const origFileName = messageObj.fileName;
-  const origFilePath = messageObj.filePath;
-  const origFileSize = messageObj.fileSize;
-  const origFileType = messageObj.fileType;
-  const origSuffix = messageObj.Suffix;
+  const origContent = messageObj.messageContent
+  const origType = messageObj.messageType
+  const origFileName = messageObj.fileName
+  const origFilePath = messageObj.filePath
+  const origFileSize = messageObj.fileSize
+  const origFileType = messageObj.fileType
+  const origSuffix = messageObj.Suffix
 
-  Object.assign(messageObj, result.data);
+  Object.assign(messageObj, result.data)
 
-  // 服务端若未返回这些必填字段，使用本地值兜底
-  if (!messageObj.messageContent) messageObj.messageContent = origContent;
-  if (!messageObj.messageType) messageObj.messageType = origType;
-  if (!messageObj.fileName) messageObj.fileName = origFileName;
-  if (!messageObj.filePath) messageObj.filePath = origFilePath;
-  if (messageObj.fileSize == null) messageObj.fileSize = origFileSize;
-  if (messageObj.fileType == null) messageObj.fileType = origFileType;
-  if (!messageObj.Suffix) messageObj.Suffix = origSuffix;
-  messageObj.contactType = props.currentChatSession.contactType;
-  // 若服务端未返回 messageId，生成一个临时 ID 保证主键不为空
+  if (!messageObj.messageContent) messageObj.messageContent = origContent
+  if (!messageObj.messageType) messageObj.messageType = origType
+  if (!messageObj.fileName) messageObj.fileName = origFileName
+  if (!messageObj.filePath) messageObj.filePath = origFilePath
+  if (messageObj.fileSize == null) messageObj.fileSize = origFileSize
+  if (messageObj.fileType == null) messageObj.fileType = origFileType
+  if (!messageObj.Suffix) messageObj.Suffix = origSuffix
+  messageObj.contactType = props.currentChatSession.contactType
+
   if (!messageObj.messageId) {
-    messageObj.messageId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+    messageObj.messageId = Date.now() * 1000 + Math.floor(Math.random() * 1000)
   }
 
-  emit("sendMessage4Local", messageObj);
-  //保存消息到本地
+  emit('sendMessage4Local', messageObj)
   window.ipcRenderer.send('addlocalMessage', messageObj)
 }
 
-//添加好友
 const searchAddRef = ref()
 const addContact = (contactId, code) => {
   searchAddRef.value.show({
@@ -208,30 +245,46 @@ const addContact = (contactId, code) => {
 }
 
 const showEmojiPopoverHandler = () => {
-  showEmojiPopover.value = true;
+  showEmojiPopover.value = true
+}
+
+const startCall = (mediaType) => {
+  const session = props.currentChatSession || {}
+  if (session.contactType != 0 || !session.contactId) {
+    proxy.Message.warning('当前会话不支持通话')
+    return
+  }
+  startOutgoingCall(
+    {
+      userId: session.contactId,
+      nickName: session.contactName
+    },
+    mediaType
+  )
 }
 
 const sendEmoji = (emoji) => {
-  msgContent.value = msgContent.value + emoji;
-  showEmojiPopover.value = false;
+  msgContent.value = msgContent.value + emoji
+  showEmojiPopover.value = false
 }
 
 const openPopover = () => {
-  document.addEventListener("click", hidePopover, false);
+  document.addEventListener('click', hidePopover, false)
 }
 
 const closePopover = () => {
-  document.removeEventListener("click", hidePopover, false)
+  document.removeEventListener('click', hidePopover, false)
 }
 
-//校验文件大小
 const checkFileSize = (fileType, fileSize, fileName) => {
+  if (fileSize == null) {
+    return true
+  }
   const SIZE_MB = 1024 * 1024
   const settingArray = Object.values(sysSettingStore.getSetting())
-  //图片
   if (fileSize > settingArray[fileType] * SIZE_MB) {
     proxy.Confirm({
-      message: `文件${fileName}超过大小${settingArray[fileType]}MB限制`,
+      message: `文件 ${fileName} 超过 ${settingArray[fileType]}MB 限制`,
       showCancelBtn: false
     })
     return false
@@ -239,22 +292,22 @@ const checkFileSize = (fileType, fileSize, fileName) => {
   return true
 }
 
-//发送文件
 const fileLimit = 10
 const checkFileLimit = (files) => {
   if (files.length > fileLimit) {
     proxy.Confirm({
-      message: `一次最多可以上传10个文件`,
+      message: `一次最多只能上传 ${fileLimit} 个文件`,
       showCancelBtn: false
     })
-    return
+    return false
   }
   return true
 }
-//拖入文件
-const dragOverHandler = () => {
+
+const dragOverHandler = (event) => {
   event.preventDefault()
 }
+
 const dropHandler = (event) => {
   event.preventDefault()
   const files = event.dataTransfer.files
@@ -266,11 +319,10 @@ const dropHandler = (event) => {
   }
 }
 
-//文件个数超过指定值
 const uploadExceed = (files) => {
   checkFileLimit(files)
 }
-//上传文件
+
 const uploadRef = ref()
 const uploadFile = (file) => {
   uploadFileDo(file.file)
@@ -291,40 +343,53 @@ const uploadFileDo = (file) => {
       fileSize: file.size,
       fileName: file.name,
       filePath: file.path,
-      fileType: fileType
+      fileType
     },
     false
   )
 }
 
-//截图粘贴上传文件
 const pasteFile = async (event) => {
-  let items = event.clipboardData && event.clipboardData.items
-  const fileData = {}
-  for (const item of items) {
-    if (item.kind != 'file') {
-      break
-    }
-    const file = await item.getAsFile()
-    if (file.path != '') {
-      uploadFileDo(file)
-    } else {
-      const imageFile = new File([file], 'temp.jpg')
-      let fileReader = new FileReader()
-      fileReader.onloadend = function () {
-        // 读取完成后获得结果
-        const byteArray = new Uint8Array(this.result)
-        fileData.byteArray = byteArray
-        fileData.name = imageFile.name
-        window.ipcRenderer.send('saveClipBoardFile', fileData)
-      }
-      fileReader.readAsArrayBuffer(imageFile)
-    }
+  const items = Array.from(event.clipboardData?.items || [])
+  const imageItem = items.find((item) => item.kind === 'file' && item.type?.startsWith('image/'))
+
+  if (!imageItem) {
+    return
   }
+
+  const file = imageItem.getAsFile()
+  if (!file) {
+    proxy.Message.warning('Failed to read image from clipboard')
+    return
+  }
+
+  event.preventDefault()
+
+  if (file.path) {
+    uploadFileDo(file)
+    return
+  }
+
+  const imageFile = new File([file], `clipboard_${Date.now()}.png`, {
+    type: file.type || 'image/png'
+  })
+  const fileReader = new FileReader()
+  fileReader.onloadend = function () {
+    const byteArray = new Uint8Array(this.result)
+    window.ipcRenderer.send('saveClipBoardFile', {
+      byteArray,
+      name: imageFile.name
+    })
+  }
+  fileReader.readAsArrayBuffer(imageFile)
 }
 
 onMounted(() => {
   window.ipcRenderer.on('saveClipBoardFileCallback', (e, file) => {
+    if (!file?.success) {
+      proxy.Message.warning(file?.errorMessage || 'Failed to paste image')
+      return
+    }
     const fileType = 0
     sendMessageDo(
       {
@@ -333,12 +398,13 @@ onMounted(() => {
         fileSize: file.size,
         fileName: file.name,
         filePath: file.path,
-        fileType: fileType
+        fileType
       },
       false
     )
   })
 })
+
 onUnmounted(() => {
   window.ipcRenderer.removeAllListeners('saveClipBoardFileCallback')
 })
@@ -381,6 +447,22 @@ onUnmounted(() => {
 
     :deep(.el-tabs__header) {
       margin-bottom: 0px;
+    }
+
+    .call-dropdown {
+      margin-left: 12px;
+      cursor: pointer;
+    }
+
+    .call-entry {
+      color: #494949;
+      font-size: 14px;
+      line-height: 1;
+      user-select: none;
+
+      &:hover {
+        color: #07c160;
+      }
     }
   }
 

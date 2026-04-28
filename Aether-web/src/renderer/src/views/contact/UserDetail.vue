@@ -36,13 +36,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick, watch } from 'vue'
+import { ref, getCurrentInstance, watch } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
+import { userContactStateStore } from '@/stores/ContactStateStore'
+import { startOutgoingCall } from '@/services/call/callService'
+
 const route = useRoute()
 const router = useRouter()
-
-import { userContactStateStore } from '@/stores/ContactStateStore'
 const contactStateStore = userContactStateStore()
 
 const CONTACT_STATUS = {
@@ -51,8 +52,9 @@ const CONTACT_STATUS = {
 }
 
 const userInfo = ref({})
+
 const loadUserDetail = async (contactId) => {
-  let result = await proxy.Request({
+  const result = await proxy.Request({
     url: proxy.Api.getUserInfoByUserId,
     params: {
       userId: contactId
@@ -79,7 +81,6 @@ const handleContactOperate = async (url, status) => {
   return true
 }
 
-//加入黑名单
 const addContact2BlackList = async () => {
   proxy.Confirm({
     message: '确定将此用户加入黑名单吗？',
@@ -88,7 +89,7 @@ const addContact2BlackList = async () => {
     }
   })
 }
-// 删除联系人
+
 const delContact = () => {
   proxy.Confirm({
     message: '确定删除此好友吗？',
@@ -105,7 +106,7 @@ const delContactData = () => {
 
 watch(
   () => route.query.contactId,
-  (newVal, oldVal) => {
+  (newVal) => {
     if (newVal) {
       loadUserDetail(newVal)
     }
@@ -123,13 +124,9 @@ const sendMessage = () => {
   })
 }
 
-const callVideo = () => {
-  // 视频通话逻辑
-}
+const callVideo = () => startOutgoingCall(userInfo.value, 'video')
 
-const callVoice = () => {
-  // 语音通话逻辑
-}
+const callVoice = () => startOutgoingCall(userInfo.value, 'voice')
 </script>
 
 <style lang="scss" scoped>
