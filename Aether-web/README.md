@@ -68,6 +68,15 @@ npm install
 
 首次安装会执行 `electron-builder install-app-deps`，用于补齐 Electron 原生依赖。
 
+需要处理ffmpeg相关包
+  获取方式：
+
+  1. 打开 FFmpeg 官方下载页：https://ffmpeg.org/download.html
+  2. 在 Windows EXE Files 里进入 gyan.dev 的构建页：https://www.gyan.dev/ffmpeg/builds/
+  3. 下载 release essentials 的 zip 包就够了。这个包里包含 ffmpeg.exe 和 ffprobe.exe
+  4. 解压后从 bin/ 目录把这两个文件复制到你的项目目录：
+     E:\xxx\xxx\Aether-web\assets\
+
 ### 2. 启动开发环境
 
 ```bash
